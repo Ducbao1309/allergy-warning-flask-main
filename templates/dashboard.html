@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell page-section">
+  <section class="page-intro dashboard-intro"><div><span class="eyebrow">DASHBOARD</span><h1>Xin chào, {{ user.full_name or user.email }}</h1><p>Quản lý thông tin dị ứng và kiểm tra sản phẩm của bạn.</p></div><a class="btn btn-primary" href="{{ url_for('scan.scan_page') }}">＋ Quét sản phẩm</a></section>
+  <section class="dashboard-grid">
+    <article class="dashboard-card"><span class="card-icon icon-green">⌕</span><h2>Quét nhãn thực phẩm</h2><p>Tải ảnh nhãn để đọc thành phần và nhận cảnh báo theo hồ sơ của bạn.</p><a class="text-link" href="{{ url_for('scan.scan_page') }}">Bắt đầu quét <span>→</span></a></article>
+    <article class="dashboard-card"><span class="card-icon icon-amber">◎</span><h2>Dị ứng của tôi</h2><p>Cập nhật danh sách dị nguyên để kết quả đối chiếu phù hợp hơn.</p><a class="text-link" href="{{ url_for('profile.profile') }}">Quản lý dị ứng <span>→</span></a></article>
+    <article class="dashboard-card"><span class="card-icon icon-blue">▤</span><h2>Lịch sử quét</h2><p>Xem lại sản phẩm, thành phần và kết quả của những lần kiểm tra trước.</p><a class="text-link" href="{{ url_for('history.scan_history') }}">Xem lịch sử <span>→</span></a></article>
+  </section>
+
+  <section class="recent-section card-panel">
+    <div class="section-title-row"><div><span class="eyebrow">HOẠT ĐỘNG</span><h2>Quét gần đây</h2></div><a class="text-link" href="{{ url_for('history.scan_history') }}">Tất cả lịch sử →</a></div>
+    {% if history_error %}<div class="inline-alert alert-error">Chưa tải được lịch sử. Kiểm tra kết nối cơ sở dữ liệu và tạo bảng scan_history.</div>
+    {% elif recent_history %}<div class="recent-list">
+      {% for item in recent_history %}<a class="recent-item" href="{{ url_for('history.scan_history_detail', history_id=item.id) }}">
+        <div class="recent-thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="Ảnh {{ item.product_name }}">{% else %}<span>▧</span>{% endif %}</div>
+        <div class="recent-copy"><strong>{{ item.product_name }}</strong><span>{{ item.brand or "Chưa nhận diện thương hiệu" }}</span></div>
+        <span class="status-pill status-{{ item.warning_status }}">{% if item.warning_status == 'warning' %}Có cảnh báo{% elif item.warning_status == 'clear' %}Chưa thấy trùng khớp{% else %}Chưa đủ dữ liệu{% endif %}</span>
+        <time>{{ item.scanned_at.strftime('%d/%m/%Y %H:%M') if item.scanned_at else '' }}</time>
+      </a>{% endfor %}
+    </div>{% else %}<div class="empty-state compact-empty"><span class="empty-icon">▤</span><h3>Bạn chưa có lịch sử quét</h3><p>Kết quả phân tích thành công sẽ được lưu tại đây.</p><a class="btn btn-secondary" href="{{ url_for('scan.scan_page') }}">Quét sản phẩm đầu tiên</a></div>{% endif %}
+  </section>
+  <section class="account-strip"><div><span class="eyebrow">TÀI KHOẢN</span><h2>{{ user.full_name or "Hồ sơ cá nhân" }}</h2><p>{{ user.email }}</p></div><a class="btn btn-secondary" href="{{ url_for('profile.profile') }}">Xem hồ sơ</a></section>
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Quét nhãn thực phẩm | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell page-section narrow-shell">
+  <section class="page-intro centered-intro"><span class="eyebrow">PHÂN TÍCH NHÃN</span><h1>Quét nhãn thực phẩm</h1><p>Tải ảnh sản phẩm để đọc tên, thành phần và dị nguyên trên nhãn.</p></section>
+  <section class="scan-card card-panel">
+    <form id="upload-form" method="POST" action="{{ url_for('scan.process_scan') }}" enctype="multipart/form-data" data-scan-form>
+      <input type="hidden" name="scan_request_id" value="{{ scan_request_id }}">
+      <label class="upload-area" for="image" data-drop-area>
+        <span class="upload-icon">↑</span><strong>Thả ảnh nhãn vào đây</strong><span>hoặc chọn ảnh từ thiết bị</span>
+        <span class="btn btn-secondary upload-select">Chọn ảnh</span>
+        <input id="image" type="file" name="image" accept=".jpg,.jpeg,.png,.webp" required>
+      </label>
+      <p class="upload-help">Hỗ trợ JPG, PNG, WEBP. Chọn ảnh có thể đọc được toàn bộ nhãn thành phần.</p>
+      <div class="image-preview" data-image-preview hidden><img src="" alt="Xem trước ảnh đã chọn"><span data-file-name></span></div>
+      <button type="submit" class="btn btn-primary full-width scan-submit" data-submit-button>Phân tích sản phẩm</button>
+      <p class="scan-loading" data-loading-message hidden><span class="spinner"></span> AI đang phân tích nhãn sản phẩm… Quá trình này có thể mất một chút thời gian.</p>
+    </form>
+  </section>
+  <section class="scan-note"><span class="notice-icon">i</span><p>Kết quả được tạo từ thông tin đọc được trên ảnh và hồ sơ dị ứng bạn đã lưu. Vui lòng kiểm tra lại nhãn gốc.</p></section>
+</div>
+{% endblock %}

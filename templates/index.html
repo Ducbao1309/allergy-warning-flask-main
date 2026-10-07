@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Đọc nhãn thực phẩm | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell">
+  <section class="hero-section">
+    <div class="hero-copy">
+      <span class="eyebrow">ĐỌC NHÃN • HIỂU THÀNH PHẦN • CHỦ ĐỘNG HƠN</span>
+      <h1>Kiểm tra thành phần thực phẩm <span>dễ dàng hơn</span></h1>
+      <p>Tải ảnh nhãn sản phẩm để hệ thống đọc thành phần và đối chiếu với hồ sơ dị ứng của bạn.</p>
+      <div class="hero-actions">
+        {% if user %}<a class="btn btn-primary" href="{{ url_for('scan.scan_page') }}">Bắt đầu quét <span aria-hidden="true">→</span></a>
+        {% else %}<a class="btn btn-primary" href="{{ url_for('auth.register') }}">Tạo tài khoản miễn phí</a><a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Đăng nhập</a>{% endif %}
+      </div>
+      <p class="trust-note"><span class="trust-dot"></span> Lưu kết quả và hồ sơ dị ứng riêng cho tài khoản của bạn</p>
+    </div>
+    <div class="hero-visual" aria-label="Minh họa quy trình đọc nhãn">
+      <div class="visual-orbit orbit-one"></div><div class="visual-orbit orbit-two"></div>
+      <div class="label-card"><div class="label-top"><span class="label-symbol">✓</span><span>THÔNG TIN SẢN PHẨM</span></div><div class="label-lines"><i></i><i></i><i></i><i></i></div><div class="label-highlight"><b></b><span>Kiểm tra dị nguyên</span></div></div>
+      <div class="floating-chip chip-top">⌕ &nbsp; Đọc nhãn bằng AI</div><div class="floating-chip chip-bottom">✓ &nbsp; Đối chiếu hồ sơ dị ứng</div>
+    </div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-heading"><span class="eyebrow">CÁCH HOẠT ĐỘNG</span><h2>Từ ảnh nhãn đến thông tin dễ hiểu</h2><p>Quy trình ngắn gọn giúp bạn xem lại những gì hệ thống nhận diện.</p></div>
+    <div class="steps-grid">
+      <article class="step-card"><span class="step-number">01</span><h3>Tải ảnh nhãn</h3><p>Chọn ảnh JPG, PNG hoặc WEBP từ thiết bị.</p></article>
+      <article class="step-card"><span class="step-number">02</span><h3>AI đọc thông tin</h3><p>Gemini trích xuất tên sản phẩm, thành phần và dị nguyên trên nhãn.</p></article>
+      <article class="step-card"><span class="step-number">03</span><h3>Đối chiếu hồ sơ</h3><p>Backend so sánh dữ liệu nhận diện với các dị ứng bạn đã chọn.</p></article>
+      <article class="step-card"><span class="step-number">04</span><h3>Xem và lưu lại</h3><p>Đọc kết quả, lưu sản phẩm và xem lại lịch sử quét.</p></article>
+    </div>
+  </section>
+
+  <section class="feature-band"><div><span class="eyebrow">THIẾT KẾ CHO VIỆC KIỂM TRA</span><h2>Thông tin rõ ràng, kết quả có thể xem lại</h2></div><div class="feature-points"><p><b>01</b> Nhận diện thành phần từ ảnh nhãn</p><p><b>02</b> Hồ sơ dị ứng theo từng tài khoản</p><p><b>03</b> Lịch sử kết quả quét</p></div></section>
+  <section class="notice-banner"><span class="notice-icon">i</span><p>Hệ thống hỗ trợ tham khảo thông tin thành phần và không thay thế tư vấn y tế. Hãy kiểm tra trực tiếp nhãn sản phẩm khi cần.</p></section>
+</div>
+{% endblock %}

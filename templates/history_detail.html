@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết lịch sử quét | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell page-section result-page">
+  <a class="back-link" href="{{ url_for('history.scan_history') }}">← Quay lại lịch sử quét</a>
+  {% if database_error %}<section class="inline-alert alert-error">Không tải được chi tiết lịch sử do lỗi cơ sở dữ liệu.</section>
+  {% else %}<section class="page-intro result-intro"><div><span class="eyebrow">CHI TIẾT LẦN QUÉT</span><h1>{{ history.product_name }}</h1><p>{{ history.brand or "Chưa nhận diện thương hiệu" }} · {{ history.scanned_at.strftime('%d/%m/%Y lúc %H:%M') if history.scanned_at else "Không rõ thời gian" }}</p></div><span class="status-pill status-{{ history.warning_status }}">{% if history.warning_status == 'warning' %}Có cảnh báo{% elif history.warning_status == 'clear' %}Chưa thấy trùng khớp{% else %}Chưa đủ dữ liệu{% endif %}</span></section>
+    <section class="result-overview card-panel"><div class="result-photo">{% if history.image_url %}<img src="{{ history.image_url }}" alt="Ảnh {{ history.product_name }}">{% else %}<span>Ảnh không còn khả dụng</span>{% endif %}</div><div class="result-summary"><span class="eyebrow">KẾT QUẢ ĐỐI CHIẾU</span>
+      {% if history.warning_status == 'warning' %}<div class="status-hero status-warning"><span class="status-symbol">!</span><div><h2>Phát hiện thành phần có khả năng liên quan</h2><p>Hãy xem danh sách kết quả được lưu trong lần quét này.</p></div></div>
+      {% elif history.warning_status == 'clear' %}<div class="status-hero status-clear"><span class="status-symbol">✓</span><div><h2>Chưa phát hiện thành phần trùng khớp</h2><p>Đây không phải kết luận rằng sản phẩm an toàn tuyệt đối.</p></div></div>
+      {% else %}<div class="status-hero status-unknown"><span class="status-symbol">!</span><div><h2>Chưa đủ dữ liệu để kết luận</h2><p>Không thể đối chiếu đầy đủ tại thời điểm quét.</p></div></div>{% endif %}
+    </div></section>
+    <div class="result-columns"><section class="card-panel result-data-panel"><div class="section-title-row"><div><span class="eyebrow">ẢNH CHỤP DỮ LIỆU LỊCH SỬ</span><h2>Thành phần</h2></div><span class="count-badge">{{ ingredients|length }}</span></div>{% if ingredients %}<ul class="ingredient-list">{% for item in ingredients %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="muted-copy">Không lưu được danh sách thành phần.</p>{% endif %}</section>
+      <section class="card-panel result-data-panel"><div class="section-title-row"><div><span class="eyebrow">DỮ LIỆU ĐÃ LƯU</span><h2>Dị nguyên</h2></div></div>{% if allergens %}<ul class="tag-list">{% for item in allergens %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="muted-copy">Không có dị nguyên được nhận diện.</p>{% endif %}</section></div>
+    {% if warnings %}<section class="card-panel match-panel"><span class="eyebrow">KẾT QUẢ ĐỐI CHIẾU ĐÃ LƯU</span><h2>Các mục cần chú ý</h2><div class="match-list">{% for item in warnings %}<article class="allergen-item"><strong>{{ item.allergen }}</strong><p>{{ item.warning }}</p>{% if item.ingredients %}<small>Có trong thành phần:</small><ul>{% for ingredient in item.ingredients %}<li>{{ ingredient }}</li>{% endfor %}</ul>{% endif %}</article>{% endfor %}</div></section>{% endif %}
+    <div class="result-actions"><a class="btn btn-primary" href="{{ url_for('scan.scan_page') }}">Quét sản phẩm khác</a><a class="btn btn-secondary" href="{{ url_for('history.scan_history') }}">Tất cả lịch sử</a></div><p class="medical-note">Thông tin lịch sử là bản chụp kết quả tại thời điểm quét. Hãy xác minh với nhãn gốc.</p>
+  {% endif %}
+</div>
+{% endblock %}

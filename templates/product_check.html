@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Kiểm tra sản phẩm | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell page-section narrow-shell"><section class="page-intro"><div><span class="eyebrow">TRA CỨU SẢN PHẨM</span><h1>Kiểm tra theo mã vạch</h1><p>Tra sản phẩm trong danh mục hiện có và đối chiếu với hồ sơ dị ứng của bạn.</p></div></section>
+  <section class="card-panel lookup-panel"><form method="POST" action="{{ url_for('product.check_product') }}" class="lookup-form"><label for="barcode">Mã vạch sản phẩm</label><div class="lookup-controls"><input id="barcode" type="text" name="barcode" value="{{ request.form.get('barcode', '') }}" placeholder="Nhập mã vạch" required><button class="btn btn-primary" type="submit">Kiểm tra</button></div></form></section>
+  {% if product %}<section class="card-panel lookup-result"><span class="eyebrow">SẢN PHẨM TÌM THẤY</span><h2>{{ product.name }}</h2><p>{{ product.brand or "Chưa có thông tin thương hiệu" }}</p><p class="muted-copy">Mã vạch: {{ product.barcode }}</p><div class="result-columns"><div><h3>Thành phần</h3><p>{{ product.ingredients_text or "Chưa có thông tin thành phần." }}</p></div><div><h3>Đối chiếu dị ứng</h3>{% if warnings %}<ul class="ingredient-list">{% for warning in warnings %}<li>{{ warning.name }} — có trong dữ liệu sản phẩm</li>{% endfor %}</ul>{% else %}<p class="muted-copy">Chưa thấy dị nguyên trong hồ sơ của bạn trùng với dữ liệu có sẵn.</p>{% endif %}</div></div></section>
+  {% elif request.method == 'POST' %}<section class="inline-alert alert-muted">Không tìm thấy sản phẩm này trong danh mục hiện có.</section>{% endif %}
+</div>
+{% endblock %}

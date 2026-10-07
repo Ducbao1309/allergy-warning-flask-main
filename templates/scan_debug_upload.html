@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Scan Upload Debug</title>
+</head>
+
+<body>
+
+<h1>Scan Upload Debug</h1>
+
+<form
+    method="POST"
+    action="{{ url_for('scan.process_scan') }}"
+    enctype="multipart/form-data"
+>
+
+    <input
+        type="file"
+        name="image"
+        accept=".jpg,.jpeg,.png,.webp"
+        required
+    >
+
+    <button type="submit">
+        TEST UPLOAD
+    </button>
+
+</form>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2E7D32">
+  <title>{% block title %}Allergy Warning{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-shell">
+      <a class="brand" href="{{ url_for('main.index') }}" aria-label="Allergy Warning, trang chủ">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span><strong>Allergy Warning</strong><small>Hệ thống cảnh báo dị ứng thực phẩm</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Mở menu">☰</button>
+      <nav class="navbar" id="primary-nav" aria-label="Điều hướng chính">
+        <a href="{{ url_for('main.index') }}">Trang chủ</a>
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+          <a href="{{ url_for('scan.scan_page') }}">Quét nhãn</a>
+          <a href="{{ url_for('history.scan_history') }}">Lịch sử quét</a>
+          <a href="{{ url_for('profile.profile') }}">Hồ sơ</a>
+          <span class="nav-user">{{ session.get('user_name', session.get('user_email', 'Tài khoản')) }}</span>
+          <a class="nav-logout" href="{{ url_for('auth.logout') }}">Đăng xuất</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Đăng nhập</a>
+          <a class="btn btn-primary btn-small" href="{{ url_for('auth.register') }}">Tạo tài khoản</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="flash-container" role="status" aria-live="polite">
+      {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+    </div>{% endif %}
+  {% endwith %}
+
+  <main class="page-main">{% block content %}{% endblock %}</main>
+
+  <footer class="site-footer">
+    <div class="footer-inner"><span>Allergy Warning</span><span>Thông tin hỗ trợ tham khảo, không thay thế tư vấn y tế.</span></div>
+  </footer>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
