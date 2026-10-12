@@ -281,24 +281,123 @@ MAX_IMAGE_BYTES = 20 * 1024 * 1024
 PRODUCT_LABEL_SCHEMA = {
     "type": "object",
     "properties": {
-        "product_name": {"type": "string"},
-        "brand": {"type": "string"},
+        "product_name": {
+            "type": "string"
+        },
+        "brand": {
+            "type": "string"
+        },
         "ingredients": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {
+                "type": "string"
+            }
         },
         "allergens": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {
+                "type": "string"
+            }
+        },
+        "may_contain_allergens": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         },
     },
-    "required": ["product_name", "brand", "ingredients", "allergens"],
+    "required": [
+        "product_name",
+        "brand",
+        "ingredients",
+        "allergens",
+        "may_contain_allergens",
+    ],
 }
 
-LABEL_READING_PROMPT = """Read the food product label in the image.
-Extract the visible product name, brand, ingredient list, and allergens declared on the label.
-Use only visible or readable information; do not infer or add details. If a field is unreadable
-or uncertain, return an empty string or list. Do not make safety or medical conclusions."""
+
+LABEL_READING_PROMPT = """Read the food product label in the image and return structured JSON.
+
+IMPORTANT:
+
+1. Read the actual ingredient list, not only highlighted, bold, uppercase,
+   colored, or otherwise formatted words.
+
+2. DO NOT use uppercase, bold, color, font weight, or visual formatting as
+   the rule for detecting allergens.
+
+3. The system must still detect an allergen when the same text is written
+   in lowercase.
+
+4. "ingredients" MUST contain only actual ingredients/components of the
+   recipe.
+
+5. "allergens" MUST contain allergens that are actually present in the
+   ingredient list.
+
+6. "may_contain_allergens" MUST contain allergens mentioned ONLY in
+   precautionary or cross-contact warning statements, for example:
+
+   - "May contain ..."
+   - "May contain traces of ..."
+   - "May contain trace of ..."
+   - "Kann ... enthalten"
+   - "Kann Spuren von ... enthalten"
+   - "Có thể chứa ..."
+   - "Có thể chứa vết ..."
+
+7. A precautionary statement is NOT an ingredient.
+
+   For example:
+
+   "Emulgator Lecithine (SOJA)"
+       -> SOJA belongs to "allergens"
+
+   "Kann SOJA, SENF und LUPINEN enthalten"
+       -> SOJA, SENF, LUPINEN belong to "may_contain_allergens"
+
+   Do NOT put the second sentence into "ingredients".
+
+8. If an allergen appears both in the actual ingredient list and in the
+   precautionary statement, put it in BOTH "allergens" and
+   "may_contain_allergens".
+
+9. Keep the original visible ingredient wording as much as possible.
+
+10. A line break caused by the image layout is NOT a new ingredient.
+
+    If a word is split with a trailing hyphen across lines, join it back.
+
+    Example:
+        "GERSTEN MALZEXTRAKT-"
+        "PULVER (1,3%)"
+
+    should become one ingredient:
+        "GERSTEN MALZEXTRAKTPULVER (1,3%)"
+
+11. Do not duplicate the same ingredient merely because:
+    - percentage was removed,
+    - capitalization differs,
+    - a word was broken by a line break,
+    - a hyphen was introduced by line wrapping.
+
+12. Use only visible/readable information.
+    Do not invent ingredients or allergens.
+
+13. If a field is unreadable or uncertain, return an empty string or list.
+
+14. Do not make medical or safety conclusions.
+
+Return exactly these fields:
+
+- product_name
+- brand
+- ingredients
+- allergens
+- may_contain_allergens
+"""
+
+
 
 
 class GeminiServiceError(Exception):
@@ -383,41 +482,128 @@ def _image_payload(image_path):
 
 def _normalize_response(response_text):
     if not response_text:
-        raise InvalidGeminiResponseError("Gemini returned an empty response.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an empty response."
+        )
 
     try:
         result = json.loads(response_text)
     except (json.JSONDecodeError, TypeError) as error:
-        raise InvalidGeminiResponseError("Gemini returned invalid JSON.") from error
+        raise InvalidGeminiResponseError(
+            "Gemini returned invalid JSON."
+        ) from error
 
     if not isinstance(result, dict):
-        raise InvalidGeminiResponseError("Gemini returned an invalid data structure.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid data structure."
+        )
 
     product_name = result.get("product_name", "")
     brand = result.get("brand", "")
     ingredients = result.get("ingredients", [])
     allergens = result.get("allergens", [])
+    may_contain_allergens = result.get(
+        "may_contain_allergens",
+        []
+    )
+
+    # ========================================
+    # KIỂM TRA PRODUCT NAME
+    # ========================================
 
     if not isinstance(product_name, str):
-        raise InvalidGeminiResponseError("Gemini returned an invalid product name.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid product name."
+        )
+
+    # ========================================
+    # KIỂM TRA BRAND
+    # ========================================
+
     if not isinstance(brand, str):
-        raise InvalidGeminiResponseError("Gemini returned an invalid brand.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid brand."
+        )
+
+    # ========================================
+    # KIỂM TRA INGREDIENTS
+    # ========================================
+
     if not isinstance(ingredients, list) or not all(
-        isinstance(item, str) for item in ingredients
+        isinstance(item, str)
+        for item in ingredients
     ):
-        raise InvalidGeminiResponseError("Gemini returned an invalid ingredient list.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid ingredient list."
+        )
+
+    # ========================================
+    # KIỂM TRA ALLERGENS
+    # ========================================
+
     if not isinstance(allergens, list) or not all(
-        isinstance(item, str) for item in allergens
+        isinstance(item, str)
+        for item in allergens
     ):
-        raise InvalidGeminiResponseError("Gemini returned an invalid allergen list.")
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid allergen list."
+        )
+
+    # ========================================
+    # KIỂM TRA MAY-CONTAIN ALLERGENS
+    # ========================================
+
+    if not isinstance(
+        may_contain_allergens,
+        list
+    ) or not all(
+        isinstance(item, str)
+        for item in may_contain_allergens
+    ):
+        raise InvalidGeminiResponseError(
+            "Gemini returned an invalid "
+            "may-contain allergen list."
+        )
+
+    # ========================================
+    # CHUẨN HÓA KẾT QUẢ
+    # ========================================
+
+    normalized_ingredients = list(
+        dict.fromkeys(
+            item.strip()
+            for item in ingredients
+            if item.strip()
+        )
+    )
+
+    normalized_allergens = list(
+        dict.fromkeys(
+            item.strip()
+            for item in allergens
+            if item.strip()
+        )
+    )
+
+    normalized_may_contain = list(
+        dict.fromkeys(
+            item.strip()
+            for item in may_contain_allergens
+            if item.strip()
+        )
+    )
 
     return {
         "product_name": product_name.strip(),
-        "brand": brand.strip(),
-        "ingredients": list(dict.fromkeys(item.strip() for item in ingredients if item.strip())),
-        "allergens": list(dict.fromkeys(item.strip() for item in allergens if item.strip())),
-    }
 
+        "brand": brand.strip(),
+
+        "ingredients": normalized_ingredients,
+
+        "allergens": normalized_allergens,
+
+        "may_contain_allergens": normalized_may_contain,
+    }
 
 def analyze_product_image(image_path):
     """Send a product-label image to Gemini and return structured label data."""
