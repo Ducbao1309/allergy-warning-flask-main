@@ -289,7 +289,10 @@ class ScanUploadIntegrationTests(unittest.TestCase):
             follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Gemini bị quá thời gian chờ".encode("utf-8"), response.data)
+        self.assertIn(
+            "Gemini gặp lỗi khi phân tích ảnh: mock timeout".encode("utf-8"),
+            response.data,
+        )
         analyze.assert_called_once()
 
     def test_unsupported_extension_is_rejected_before_gemini(self):

@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Chỉnh sửa sản phẩm | Admin{% endblock %}
+
+{% block admin_content %}
+<header class="admin-page-heading">
+  <div>
+    <span class="eyebrow">CHỈNH SỬA #{{ product.id }}</span>
+    <h1>Sửa sản phẩm</h1>
+    <p>Các dòng ProductIngredient không bị thay đổi từ biểu mẫu này.</p>
+  </div>
+</header>
+
+{% set values = form_values %}
+<form class="admin-edit-form card-panel" method="post" action="{{ url_for('admin.product_edit', product_id=product.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+  <div class="admin-form-grid">
+    <div class="form-group admin-form-wide"><label for="name">Tên sản phẩm <span class="required-mark">*</span></label><input id="name" name="name" maxlength="255" required value="{{ values.name if values else product.name or '' }}"></div>
+    <div class="form-group"><label for="brand">Thương hiệu</label><input id="brand" name="brand" maxlength="255" value="{{ values.brand if values else product.brand or '' }}"></div>
+    <div class="form-group"><label for="barcode">Barcode</label><input id="barcode" name="barcode" maxlength="50" value="{{ values.barcode if values else product.barcode or '' }}"></div>
+    <div class="form-group admin-form-wide"><label for="ingredients_text">Ingredients text</label><textarea id="ingredients_text" name="ingredients_text" rows="5">{{ values.ingredients_text if values else product.ingredients_text or '' }}</textarea></div>
+    <div class="form-group admin-form-wide"><label for="allergens_text">Allergens text</label><textarea id="allergens_text" name="allergens_text" rows="3">{{ values.allergens_text if values else product.allergens_text or '' }}</textarea></div>
+    <div class="form-group admin-form-wide"><label for="allergens_tags">Allergens tags</label><textarea id="allergens_tags" name="allergens_tags" rows="3">{{ values.allergens_tags if values else product.allergens_tags or '' }}</textarea></div>
+    <div class="form-group admin-form-wide"><label for="image_url">Image URL</label><input id="image_url" name="image_url" maxlength="1000" value="{{ values.image_url if values else product.image_url or '' }}"></div>
+    <div class="form-group admin-form-wide"><label for="source_url">Source URL</label><input id="source_url" name="source_url" maxlength="1000" value="{{ values.source_url if values else product.source_url or '' }}"></div>
+  </div>
+  <div class="admin-form-actions">
+    <a class="btn btn-secondary" href="{{ url_for('admin.product_detail', product_id=product.id) }}">Hủy</a>
+    <button class="btn btn-primary" type="submit">Lưu thay đổi</button>
+  </div>
+</form>
+{% endblock %}

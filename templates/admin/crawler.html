@@ -1,0 +1,63 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Data Crawler | Admin{% endblock %}
+
+{% block admin_content %}
+<header class="admin-page-heading">
+  <div>
+    <span class="eyebrow">OPEN FOOD FACTS</span>
+    <h1>Data Crawler</h1>
+    <p>Lấy dữ liệu sản phẩm từ Open Food Facts và thêm sản phẩm mới vào catalog.</p>
+  </div>
+</header>
+
+<section class="admin-crawler-panel card-panel">
+  <div class="admin-crawler-source">
+    <span class="admin-crawler-source-icon" aria-hidden="true">↻</span>
+    <div><span class="admin-stat-label">Nguồn dữ liệu</span><strong>Open Food Facts</strong></div>
+  </div>
+  <form class="admin-crawler-form" method="post" action="{{ url_for('admin.crawler_start') }}">
+    <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+    <div class="admin-crawler-control">
+      <label for="crawl-count">Số lượng sản phẩm muốn cào</label>
+      <input id="crawl-count" name="count" type="number" min="1" max="100" step="1" value="{{ selected_count }}" required>
+    </div>
+    <button class="btn btn-primary" type="submit">Cào dữ liệu</button>
+  </form>
+  {% if error_message %}<p class="admin-crawler-error" role="alert">{{ error_message }}</p>{% endif %}
+</section>
+
+{% if result %}
+<section class="admin-crawl-result card-panel" aria-live="polite">
+  <header class="admin-crawl-result-heading">
+    <div>
+      <span class="eyebrow">KẾT QUẢ LẦN CRAWL GẦN NHẤT</span>
+      <h2>{% if result.status == 'success' %}Crawl hoàn thành{% elif result.status == 'partial' %}Crawl hoàn thành với cảnh báo{% else %}Crawl chưa hoàn thành{% endif %}</h2>
+    </div>
+    <span class="admin-crawl-status admin-crawl-status-{{ result.status }}">
+      {% if result.status == 'success' %}Hoàn thành{% elif result.status == 'partial' %}Có cảnh báo{% else %}Thất bại{% endif %}
+    </span>
+  </header>
+  <dl class="admin-crawl-stats">
+    <div><dt>Số lượng yêu cầu</dt><dd>{{ result.requested_count }}</dd></div>
+    <div><dt>Sản phẩm lấy được</dt><dd>{{ result.fetched_count }}</dd></div>
+    <div><dt>Sản phẩm mới</dt><dd>{{ result.inserted_count }}</dd></div>
+    <div><dt>Sản phẩm trùng</dt><dd>{{ result.duplicate_count }}</dd></div>
+    <div><dt>Lỗi</dt><dd>{{ result.error_count }}</dd></div>
+  </dl>
+  {% if result.started_at or result.finished_at %}
+  <div class="admin-crawl-times">
+    {% if result.started_at %}<span>Bắt đầu: {{ result.started_at }}</span>{% endif %}
+    {% if result.finished_at %}<span>Kết thúc: {{ result.finished_at }}</span>{% endif %}
+  </div>
+  {% endif %}
+  {% if result.errors %}
+  <div class="admin-crawl-errors" role="status">
+    <strong>Thông tin lỗi</strong>
+    <ul>{% for error in result.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    {% if result.error_count > result.errors|length %}<p>Còn {{ result.error_count - result.errors|length }} lỗi khác chưa hiển thị.</p>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

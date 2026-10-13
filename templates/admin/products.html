@@ -1,0 +1,70 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý sản phẩm | Allergy Warning{% endblock %}
+
+{% block admin_content %}
+<header class="admin-page-heading">
+  <div>
+    <span class="eyebrow">CATALOG</span>
+    <h1>Quản lý sản phẩm</h1>
+    <p>Tìm kiếm và quản lý sản phẩm trong database.</p>
+  </div>
+</header>
+
+<form class="admin-search card-panel" action="{{ url_for('admin.products') }}" method="get">
+  <label for="product-search">Tìm theo tên, thương hiệu hoặc barcode</label>
+  <div class="admin-search-row">
+    <input id="product-search" type="search" name="q" value="{{ search }}" placeholder="Ví dụ: Vinasoy hoặc barcode">
+    <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+    {% if search %}<a class="btn btn-secondary" href="{{ url_for('admin.products') }}">Xóa lọc</a>{% endif %}
+  </div>
+</form>
+
+<section class="admin-table-panel card-panel">
+  <div class="admin-table-heading">
+    <h2>Sản phẩm</h2>
+    <span>{{ pagination.total }} kết quả</span>
+  </div>
+  {% if products %}
+  <div class="admin-table-scroll">
+    <table class="admin-table">
+      <thead><tr><th>ID</th><th>Tên sản phẩm</th><th>Thương hiệu</th><th>Barcode</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+      <tbody>
+        {% for product in products %}
+        <tr>
+          <td>{{ product.id }}</td>
+          <td><strong>{{ product.name }}</strong></td>
+          <td>{{ product.brand or "—" }}</td>
+          <td>{{ product.barcode or "—" }}</td>
+          <td>{{ product.created_at.strftime("%d/%m/%Y") if product.created_at else "—" }}</td>
+          <td>
+            <div class="admin-row-actions">
+              <a class="admin-action-link" href="{{ url_for('admin.product_detail', product_id=product.id) }}">Xem</a>
+              <a class="admin-action-link" href="{{ url_for('admin.product_edit', product_id=product.id) }}">Sửa</a>
+              <form method="post" action="{{ url_for('admin.product_delete', product_id=product.id) }}" data-confirm-delete>
+                <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+                <button class="admin-action-link admin-delete-link" type="submit">Xóa</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="admin-empty-state">
+    <strong>Không tìm thấy sản phẩm</strong>
+    <span>{% if search %}Thử từ khóa khác.{% else %}Catalog hiện chưa có sản phẩm.{% endif %}</span>
+  </div>
+  {% endif %}
+
+  {% if pagination.pages > 1 %}
+  <nav class="admin-pagination" aria-label="Phân trang">
+    {% if pagination.has_prev %}<a href="{{ url_for('admin.products', q=search or None, page=pagination.prev_num) }}">← Trước</a>{% else %}<span class="is-disabled">← Trước</span>{% endif %}
+    <span>Trang {{ pagination.page }} / {{ pagination.pages }}</span>
+    {% if pagination.has_next %}<a href="{{ url_for('admin.products', q=search or None, page=pagination.next_num) }}">Tiếp →</a>{% else %}<span class="is-disabled">Tiếp →</span>{% endif %}
+  </nav>
+  {% endif %}
+</section>
+{% endblock %}

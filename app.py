@@ -9,6 +9,7 @@ from routes.auth import auth_bp
 from routes.scan import scan_bp
 from routes.profile import profile_bp
 from routes.history import history_bp
+from routes.admin import admin_bp
 
 
 # =========================================================
@@ -42,6 +43,8 @@ app.register_blueprint(profile_bp)
 app.register_blueprint(product_bp)
 
 app.register_blueprint(history_bp)
+
+app.register_blueprint(admin_bp)
 
 # =========================================================
 # RUN

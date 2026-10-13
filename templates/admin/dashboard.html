@@ -1,0 +1,49 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Admin Dashboard | Allergy Warning{% endblock %}
+
+{% block admin_content %}
+<header class="admin-page-heading">
+  <div>
+    <span class="eyebrow">TỔNG QUAN</span>
+    <h1>Admin Dashboard</h1>
+    <p>Quản lý catalog sản phẩm và theo dõi dữ liệu hiện có.</p>
+  </div>
+</header>
+
+<section class="admin-stat-grid" aria-label="Thống kê">
+  <article class="admin-stat-card">
+    <span class="admin-stat-label">Tổng sản phẩm</span>
+    <strong>{{ "{:,.0f}".format(total_products) }}</strong>
+    <span class="admin-stat-note">Số sản phẩm đang có trong database</span>
+  </article>
+  <article class="admin-stat-card">
+    <span class="admin-stat-label">Sản phẩm mới</span>
+    <strong>{{ "{:,.0f}".format(new_products) }}</strong>
+    <span class="admin-stat-note">Được tạo trong 7 ngày gần nhất</span>
+  </article>
+  <article class="admin-stat-card">
+    <span class="admin-stat-label">Số lần crawl</span>
+    <strong class="admin-stat-pending">Chưa có dữ liệu</strong>
+    <span class="admin-stat-note">Ứng dụng chưa lưu lịch sử các lần crawl</span>
+  </article>
+  <article class="admin-stat-card">
+    <span class="admin-stat-label">Lần crawl gần nhất</span>
+    <strong class="admin-stat-pending">Chưa có dữ liệu</strong>
+    <span class="admin-stat-note">Kết quả được hiển thị sau mỗi lần chạy</span>
+  </article>
+</section>
+
+<section class="admin-shortcuts">
+  <a class="admin-shortcut-card" href="{{ url_for('admin.products') }}">
+    <span class="admin-shortcut-icon">▤</span>
+    <span><strong>Quản lý sản phẩm</strong><small>Tìm kiếm, xem, chỉnh sửa hoặc xóa sản phẩm.</small></span>
+    <span class="admin-shortcut-arrow">→</span>
+  </a>
+  <a class="admin-shortcut-card" href="{{ url_for('admin.crawler_placeholder') }}">
+    <span class="admin-shortcut-icon admin-icon-muted">↻</span>
+    <span><strong>Cào dữ liệu</strong><small>Lấy sản phẩm mới từ Open Food Facts vào catalog.</small></span>
+    <span class="admin-shortcut-arrow">→</span>
+  </a>
+</section>
+{% endblock %}
