@@ -12,8 +12,11 @@ from PIL import Image
 
 from services.gemini_service import (
     GEMINI_MODEL,
+    LABEL_READING_PROMPT,
+    PRODUCT_LABEL_SCHEMA,
     REQUEST_TIMEOUT_SECONDS,
     GeminiServiceError,
+    _normalize_response,
     analyze_product_image,
 )
 
@@ -46,11 +49,32 @@ class GeminiImageRequestTests(unittest.TestCase):
                     "services.gemini_service.genai.Client",
                     return_value=client,
                 ) as client_factory:
-                    result = analyze_product_image(image_path)
+                    with self.assertLogs("services.gemini_service", level="INFO") as captured:
+                        diagnostics = []
+                        result = analyze_product_image(
+                            image_path,
+                            diagnostic_callback=lambda stage, details: diagnostics.append(
+                                (stage, details)
+                            ),
+                        )
 
                 self.assertEqual(result["product_name"], "Test noodles")
                 self.assertEqual(result["ingredients"], ["wheat flour", "salt"])
                 self.assertEqual(result["allergens"], ["wheat"])
+                logs = "\n".join(captured.output)
+                self.assertIn("ingredients_field_present=True", logs)
+                self.assertIn("product_name=Test noodles", logs)
+                self.assertIn("ingredients_count=2", logs)
+                self.assertIn("allergens_count=1", logs)
+                self.assertIn("source_dimensions=100x60", logs)
+                self.assertIn("outgoing_dimensions=100x60", logs)
+                image_trace = next(item for item in diagnostics if item[0] == "image")[1]
+                self.assertEqual(image_trace["outgoing_mime_type"], "image/jpeg")
+                response_trace = next(item for item in diagnostics if item[0] == "response_fields")[1]
+                self.assertTrue(response_trace["ingredients_field_present"])
+                self.assertEqual(response_trace["ingredients_raw_value"], ["wheat flour", "salt"])
+                parsed_trace = next(item for item in diagnostics if item[0] == "parsed_result")[1]
+                self.assertEqual(parsed_trace["parsed_ingredients_count"], 2)
                 client_factory.assert_called_once()
                 options = client_factory.call_args.kwargs["http_options"]
                 self.assertEqual(options.timeout, REQUEST_TIMEOUT_SECONDS * 1000)
@@ -64,6 +88,75 @@ class GeminiImageRequestTests(unittest.TestCase):
                 decoded_image = base64.b64decode(image_part["data"])
                 with Image.open(io.BytesIO(decoded_image)) as sent_image:
                     self.assertEqual(sent_image.format, "JPEG")
+
+    def test_parser_preserves_english_ingredient_and_allergen_arrays(self):
+        result = _normalize_response(json.dumps({
+            "product_name": "Test Product",
+            "brand": "",
+            "ingredients": ["Wheat flour", "Sugar", "Almonds"],
+            "allergens": ["Wheat", "Almonds"],
+            "may_contain_allergens": [],
+        }))
+
+        self.assertEqual(result["ingredients"], ["Wheat flour", "Sugar", "Almonds"])
+        self.assertEqual(result["allergens"], ["Wheat", "Almonds"])
+
+    def test_parser_preserves_string_ingredients_without_guessing_boundaries(self):
+        result = _normalize_response(json.dumps({
+            "product_name": "Test Product",
+            "brand": "",
+            "ingredients": " Wheat flour, Sugar, Almonds ",
+            "allergens": [],
+            "may_contain_allergens": [],
+        }))
+
+        self.assertEqual(result["ingredients"], ["Wheat flour, Sugar, Almonds"])
+
+    def test_parser_preserves_english_and_mixed_language_array_items(self):
+        ingredients = ["Wheat flour", "Sugar", "Almonds", "Milk powder", "\u0111\u01b0\u1eddng", "s\u1eefa b\u1ed9t"]
+        result = _normalize_response(json.dumps({
+            "product_name": "Test Product",
+            "brand": "",
+            "ingredients": ingredients,
+            "allergens": [],
+            "may_contain_allergens": [],
+        }))
+
+        self.assertEqual(result["ingredients"], ingredients)
+
+    def test_parser_keeps_empty_ingredients_empty(self):
+        result = _normalize_response(json.dumps({
+            "product_name": "Unknown Product",
+            "brand": "",
+            "ingredients": [],
+            "allergens": [],
+            "may_contain_allergens": [],
+        }))
+
+        self.assertEqual(result["ingredients"], [])
+
+    def test_parser_diagnostic_distinguishes_missing_ingredients_from_empty_array(self):
+        diagnostics = []
+        result = _normalize_response(json.dumps({
+            "product_name": "Unknown Product",
+            "brand": "",
+            "allergens": [],
+            "may_contain_allergens": [],
+        }), diagnostic_callback=lambda stage, details: diagnostics.append((stage, details)))
+
+        response_trace = next(item for item in diagnostics if item[0] == "response_fields")[1]
+        self.assertFalse(response_trace["ingredients_field_present"])
+        self.assertEqual(response_trace["ingredients_raw_type"], "missing")
+        self.assertIsNone(response_trace["ingredients_raw_value"])
+        self.assertEqual(result["ingredients"], [])
+
+    def test_prompt_explicitly_searches_english_and_mixed_language_sections(self):
+        for section in ("Ingredients", "Composition", "Contains", "Allergen information", "May contain"):
+            with self.subTest(section=section):
+                self.assertIn(section.lower(), LABEL_READING_PROMPT.lower())
+        self.assertIn("English", LABEL_READING_PROMPT)
+        self.assertIn("Do not invent ingredients or allergens", LABEL_READING_PROMPT)
+        self.assertEqual(PRODUCT_LABEL_SCHEMA["properties"]["ingredients"]["type"], "array")
 
     def test_request_timeout_is_reported_without_swallowing_exception(self):
         with tempfile.TemporaryDirectory() as folder:

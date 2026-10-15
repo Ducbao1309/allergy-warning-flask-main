@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 
 from models import User, Product, UserAllergen
+from services.product_service import normalize_allergen_tag, normalize_allergen_tags
 import json
 
 
@@ -61,8 +62,8 @@ def check_product():
                 # DỊ NGUYÊN CỦA SẢN PHẨM
                 # =========================================
 
-                product_allergens = json.loads(
-                    product.allergens_tags or "[]"
+                product_allergens = normalize_allergen_tags(
+                    json.loads(product.allergens_tags or "[]")
                 )
 
                 # =========================================
@@ -80,8 +81,9 @@ def check_product():
                 for item in user_allergens:
 
                     user_tag = item.allergen.off_tag
+                    canonical_tag = normalize_allergen_tag(user_tag)
 
-                    if user_tag in product_allergens:
+                    if canonical_tag and canonical_tag in product_allergens:
 
                         warnings.append({
                             "name": item.allergen.name,

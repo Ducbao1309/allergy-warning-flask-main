@@ -752,7 +752,7 @@ ALLERGEN_DEFINITIONS = {
     # SỮA
     # =====================================================
 
-    "en:milk": (
+    "MILK": (
         "Sữa",
         [
             "sữa",
@@ -779,7 +779,7 @@ ALLERGEN_DEFINITIONS = {
     # ĐẬU NÀNH
     # =====================================================
 
-    "en:soybeans": (
+    "SOY": (
         "Đậu nành",
         [
             "soy",
@@ -794,11 +794,12 @@ ALLERGEN_DEFINITIONS = {
     # ĐẬU PHỘNG
     # =====================================================
 
-    "en:peanuts": (
+    "PEANUT": (
         "Đậu phộng",
         [
             "peanut",
             "peanuts",
+            "\u0111au phong",
             "groundnut",
             "erdnuss",
             "erdnusse",
@@ -809,7 +810,7 @@ ALLERGEN_DEFINITIONS = {
     # TRỨNG
     # =====================================================
 
-    "en:eggs": (
+    "EGG": (
         "Trứng",
         [
             "egg",
@@ -826,7 +827,7 @@ ALLERGEN_DEFINITIONS = {
     # hiện tại của hệ thống.
     # =====================================================
 
-    "en:wheat": (
+    "WHEAT": (
         "Ngũ cốc chứa gluten",
         [
             "wheat",
@@ -851,7 +852,7 @@ ALLERGEN_DEFINITIONS = {
     # CÁ
     # =====================================================
 
-    "en:fish": (
+    "FISH": (
         "Cá",
         [
             "fish",
@@ -866,7 +867,7 @@ ALLERGEN_DEFINITIONS = {
     # GIÁP XÁC
     # =====================================================
 
-    "en:crustaceans": (
+    "CRUSTACEANS": (
         "Giáp xác",
         [
             "shrimp",
@@ -881,13 +882,15 @@ ALLERGEN_DEFINITIONS = {
     # CÁC LOẠI HẠT
     # =====================================================
 
-    "en:tree-nuts": (
+    "TREE_NUTS": (
         "Các loại hạt",
         [
             "almond",
             "almonds",
             "cashew",
+            "cashews",
             "walnut",
+            "walnuts",
             "hazelnut",
             "hazelnuts",
             "haselnuss",
@@ -896,6 +899,12 @@ ALLERGEN_DEFINITIONS = {
             "pistachios",
             "noisette",
             "noisettes",
+            "hat hanh nhan",
+            "hat dieu",
+            "hat \u0111ieu",
+            "qua oc cho",
+            "hat phi",
+            "hat de cuoi",
         ],
     ),
 
@@ -903,7 +912,8 @@ ALLERGEN_DEFINITIONS = {
     # MÙ TẠT
     # =====================================================
 
-    "en:mustard": (
+
+    "MUSTARD": (
         "Mù tạt",
         [
             "mustard",
@@ -915,7 +925,7 @@ ALLERGEN_DEFINITIONS = {
     # LUPIN
     # =====================================================
 
-    "en:lupin": (
+    "LUPIN": (
         "Đậu lupin",
         [
             "lupin",
@@ -928,7 +938,7 @@ ALLERGEN_DEFINITIONS = {
     # MÈ / VỪNG
     # =====================================================
 
-    "en:sesame": (
+    "SESAME": (
         "Mè / vừng",
         [
             "sesame",
@@ -940,7 +950,7 @@ ALLERGEN_DEFINITIONS = {
     # ĐỘNG VẬT THÂN MỀM
     # =====================================================
 
-    "en:molluscs": (
+    "MOLLUSCS": (
         "Động vật thân mềm",
         [
             "mollusc",
@@ -957,7 +967,7 @@ ALLERGEN_DEFINITIONS = {
     # CẦN TÂY
     # =====================================================
 
-    "en:celery": (
+    "CELERY": (
         "Cần tây",
         [
             "celery",
@@ -969,7 +979,7 @@ ALLERGEN_DEFINITIONS = {
     # SULFITE
     # =====================================================
 
-    "en:sulphites": (
+    "SULPHITES": (
         "Sulfite",
         [
             "sulphite",
@@ -990,11 +1000,13 @@ ALLERGEN_HIERARCHY = {
     # CÁC LOẠI HẠT
     # =====================================================
 
-    "en:tree-nuts": {
+    "TREE_NUTS": {
         "almond",
         "almonds",
         "cashew",
+        "cashews",
         "walnut",
+        "walnuts",
         "hazelnut",
         "hazelnuts",
         "haselnuss",
@@ -1003,13 +1015,19 @@ ALLERGEN_HIERARCHY = {
         "pistachios",
         "noisette",
         "noisettes",
+        "hat hanh nhan",
+        "hat dieu",
+        "hat \u0111ieu",
+        "qua oc cho",
+        "hat phi",
+        "hat de cuoi",
     },
 
     # =====================================================
     # GIÁP XÁC
     # =====================================================
 
-    "en:crustaceans": {
+    "CRUSTACEANS": {
         "shrimp",
         "prawn",
         "crab",
@@ -1021,7 +1039,7 @@ ALLERGEN_HIERARCHY = {
     # ĐỘNG VẬT THÂN MỀM
     # =====================================================
 
-    "en:molluscs": {
+    "MOLLUSCS": {
         "squid",
         "octopus",
         "mussel",
@@ -1033,7 +1051,7 @@ ALLERGEN_HIERARCHY = {
     # CÁ
     # =====================================================
 
-    "en:fish": {
+    "FISH": {
         "salmon",
         "tuna",
         "cod",
@@ -1045,7 +1063,7 @@ ALLERGEN_HIERARCHY = {
     # SỮA
     # =====================================================
 
-    "en:milk": {
+    "MILK": {
         "milk",
         "milch",
         "lait",
@@ -1063,7 +1081,7 @@ ALLERGEN_HIERARCHY = {
     # ĐẬU NÀNH
     # =====================================================
 
-    "en:soybeans": {
+    "SOY": {
         "soy",
         "soya",
         "soybean",
@@ -1075,9 +1093,10 @@ ALLERGEN_HIERARCHY = {
     # ĐẬU PHỘNG
     # =====================================================
 
-    "en:peanuts": {
+    "PEANUT": {
         "peanut",
         "peanuts",
+        "\u0111au phong",
         "groundnut",
         "erdnuss",
         "erdnusse",
@@ -1087,7 +1106,7 @@ ALLERGEN_HIERARCHY = {
     # TRỨNG
     # =====================================================
 
-    "en:eggs": {
+    "EGG": {
         "egg",
         "eggs",
         "albumin",
@@ -1098,7 +1117,7 @@ ALLERGEN_HIERARCHY = {
     # NGŨ CỐC CHỨA GLUTEN
     # =====================================================
 
-    "en:wheat": {
+    "WHEAT": {
         "wheat",
         "weizen",
         "weizenmehl",
@@ -1118,7 +1137,7 @@ ALLERGEN_HIERARCHY = {
     # MÙ TẠT
     # =====================================================
 
-    "en:mustard": {
+    "MUSTARD": {
         "mustard",
         "senf",
     },
@@ -1127,7 +1146,7 @@ ALLERGEN_HIERARCHY = {
     # LUPIN
     # =====================================================
 
-    "en:lupin": {
+    "LUPIN": {
         "lupin",
         "lupine",
         "lupinen",
@@ -1137,7 +1156,7 @@ ALLERGEN_HIERARCHY = {
     # MÈ
     # =====================================================
 
-    "en:sesame": {
+    "SESAME": {
         "sesame",
         "sesam",
     },
@@ -1146,7 +1165,7 @@ ALLERGEN_HIERARCHY = {
     # CẦN TÂY
     # =====================================================
 
-    "en:celery": {
+    "CELERY": {
         "celery",
         "sellerie",
     },
@@ -1155,7 +1174,7 @@ ALLERGEN_HIERARCHY = {
     # SULFITE
     # =====================================================
 
-    "en:sulphites": {
+    "SULPHITES": {
         "sulphite",
         "sulfite",
         "sulphur dioxide",
@@ -1168,127 +1187,224 @@ ALLERGEN_HIERARCHY = {
 # =========================================================
 
 ALLERGEN_TAG_ALIASES = {
-    "en:nuts": "en:tree-nuts",
-    "en:tree_nuts": "en:tree-nuts",
-    "en:sulfites": "en:sulphites",
-    "en:sulfite": "en:sulphites",
+    # Existing taxonomy group tags and leaf tags normalize to stable IDs.
+    "en:milk": "MILK",
+    "en:milk-powder": "MILK",
+    "en:soy": "SOY",
+    "en:soya": "SOY",
+    "en:soybean": "SOY",
+    "en:soybeans": "SOY",
+    "en:peanut": "PEANUT",
+    "en:peanuts": "PEANUT",
+    "en:groundnut": "PEANUT",
+    "en:groundnuts": "PEANUT",
+    "en:egg": "EGG",
+    "en:eggs": "EGG",
+    "en:wheat": "WHEAT",
+    "en:gluten": "WHEAT",
+    "en:fish": "FISH",
+    "en:crustaceans": "CRUSTACEANS",
+    "en:tree-nuts": "TREE_NUTS",
+    "en:tree-nut": "TREE_NUTS",
+    "en:nut": "TREE_NUTS",
+    "en:tree_nuts": "TREE_NUTS",
+    "en:nuts": "TREE_NUTS",
+    "en:almond": "TREE_NUTS",
+    "en:almonds": "TREE_NUTS",
+    "en:cashew": "TREE_NUTS",
+    "en:cashews": "TREE_NUTS",
+    "en:walnut": "TREE_NUTS",
+    "en:walnuts": "TREE_NUTS",
+    "en:hazelnut": "TREE_NUTS",
+    "en:hazelnuts": "TREE_NUTS",
+    "en:pistachio": "TREE_NUTS",
+    "en:pistachios": "TREE_NUTS",
+    "en:mustard": "MUSTARD",
+    "en:lupin": "LUPIN",
+    "en:lupine": "LUPIN",
+    "en:sesame": "SESAME",
+    "en:sesame-seeds": "SESAME",
+    "en:sesame_seeds": "SESAME",
+    "en:molluscs": "MOLLUSCS",
+    "en:mollusks": "MOLLUSCS",
+    "en:celery": "CELERY",
+    "en:sulphites": "SULPHITES",
+    "en:sulfites": "SULPHITES",
+    "en:sulphite": "SULPHITES",
+    "en:sulfite": "SULPHITES",
+    "en:sulphur-dioxide-and-sulphites": "SULPHITES",
+    "en:sulfur-dioxide-and-sulfites": "SULPHITES",
+}
+
+
+ALLERGEN_NAME_ALIASES = {}
+
+CANONICAL_ALLERGEN_IDS = frozenset(ALLERGEN_DEFINITIONS)
+
+for _canonical_id, (_label, _keywords) in ALLERGEN_DEFINITIONS.items():
+    ALLERGEN_NAME_ALIASES.setdefault(
+        normalize_text(_canonical_id.replace("_", " ")),
+        _canonical_id,
+    )
+    ALLERGEN_NAME_ALIASES.setdefault(normalize_text(_label), _canonical_id)
+    for _keyword in _keywords:
+        ALLERGEN_NAME_ALIASES.setdefault(normalize_text(_keyword), _canonical_id)
+
+ALLERGEN_NAME_ALIASES.update({
+    "hat cay": "TREE_NUTS",
+    "hat \u0111ieu": "TREE_NUTS",
+    "\u0111au phong": "PEANUT",
+    "vung": "SESAME",
+    "sulfit": "SULPHITES",
+    # Vietnamese names and ingredient phrases for existing canonical groups.
+    "ca": "FISH",
+    "ca trich": "FISH",
+    "ca hoi": "FISH",
+    "ca ngu": "FISH",
+    "ca thu": "FISH",
+    "ca moi": "FISH",
+    "ca tuyet": "FISH",
+    "\u0111\u1eadu n\u00e0nh": "SOY",
+    "\u0111\u1eadu t\u01b0\u01a1ng": "SOY",
+    "d\u1ea7u \u0111\u1eadu n\u00e0nh": "SOY",
+    "d\u1ea7u \u0111\u1eadu t\u01b0\u01a1ng": "SOY",
+    "s\u1eefa \u0111\u1eadu n\u00e0nh": "SOY",
+    "\u0111\u1ea1m \u0111\u1eadu n\u00e0nh": "SOY",
+    "protein \u0111\u1eadu n\u00e0nh": "SOY",
+    "h\u1ea1t c\u00e2y": "TREE_NUTS",
+    "h\u1ea1nh nh\u00e2n": "TREE_NUTS",
+    "h\u1ea1t h\u1ea1nh nh\u00e2n": "TREE_NUTS",
+    "h\u1ea1t \u0111i\u1ec1u": "TREE_NUTS",
+    "\u00f3c ch\u00f3": "TREE_NUTS",
+    "qu\u1ea3 \u00f3c ch\u00f3": "TREE_NUTS",
+    "h\u1ed3 \u0111\u00e0o": "TREE_NUTS",
+    "ph\u1ec9": "TREE_NUTS",
+    "h\u1ea1t ph\u1ec9": "TREE_NUTS",
+    "macca": "TREE_NUTS",
+    "h\u1ea1t macca": "TREE_NUTS",
+    "h\u1ed3 tr\u0103n": "TREE_NUTS",
+    "h\u1ea1t d\u1ebb c\u01b0\u1eddi": "TREE_NUTS",
+})
+
+
+def _normalize_allergen_text(value):
+    """Normalize allergen phrases, including Vietnamese d-with-stroke."""
+    return normalize_text(value).replace("\u0111", "d")
+
+
+# Use one lookup form for accented and unaccented Vietnamese spellings.
+ALLERGEN_NAME_ALIASES = {
+    _normalize_allergen_text(alias): canonical
+    for alias, canonical in ALLERGEN_NAME_ALIASES.items()
 }
 
 
 # =========================================================
-# CHUẨN HÓA TAG DỊ NGUYÊN
-# =========================================================
-
-def normalize_allergen_tag(tag):
-
-    if not tag:
-        return None
-
-    normalized = str(
-        tag
-    ).strip().lower()
-
-    if not normalized:
-        return None
-
-    if ":" not in normalized:
-        normalized = f"en:{normalized}"
-
-    return ALLERGEN_TAG_ALIASES.get(
-        normalized,
-        normalized
-    )
-
-
-# =========================================================
-# RESOLVE TÊN DỊ NGUYÊN -> TAG
+# NORMALIZE AND RESOLVE ALLERGEN VALUES
 # =========================================================
 
 def resolve_allergen_tag(value):
-    """
-    Chuyển tên dị nguyên thành tag chuẩn.
-
-    Ví dụ:
-
-        SOJA
-        -> en:soybeans
-
-        SENF
-        -> en:mustard
-
-        LUPINEN
-        -> en:lupin
-
-        HASELNÜSSE
-        -> en:tree-nuts
-
-    Hàm này giúp Gemini có thể trả về tên dị nguyên
-    thay vì bắt buộc phải trả về off_tag.
-    """
-
-    if not value:
+    """Resolve OFF tags, canonical IDs, and exact language aliases."""
+    if value is None:
         return None
 
-    # -----------------------------------------------------
-    # Nếu value đã là tag
-    # -----------------------------------------------------
+    raw_value = unicodedata.normalize("NFKC", str(value)).strip().casefold()
+    if not raw_value:
+        return None
 
-    direct_tag = normalize_allergen_tag(value)
+    if raw_value in {"m\u00e8", "v\u1eebng"}:
+        return "SESAME"
 
-    if direct_tag in ALLERGEN_DEFINITIONS:
-        return direct_tag
+    if raw_value.upper() in CANONICAL_ALLERGEN_IDS:
+        return raw_value.upper()
 
-    normalized_value = normalize_text(value)
+    if raw_value in ALLERGEN_TAG_ALIASES:
+        return ALLERGEN_TAG_ALIASES[raw_value]
 
+    normalized_value = _normalize_allergen_text(raw_value)
     if not normalized_value:
         return None
 
-    # -----------------------------------------------------
-    # So với label + keyword
-    # -----------------------------------------------------
+    canonical = ALLERGEN_NAME_ALIASES.get(normalized_value)
+    if canonical:
+        return canonical
 
-    for tag, definition in ALLERGEN_DEFINITIONS.items():
-
-        label = definition[0]
-        keywords = definition[1]
-
-        candidates = {
-            normalize_text(tag),
-            normalize_text(
-                tag.replace("en:", "")
-            ),
-            normalize_text(label),
-        }
-
-        candidates.update(
-            normalize_text(keyword)
-            for keyword in keywords
-        )
-
-        candidates.discard("")
-
-        if normalized_value in candidates:
-            return tag
-
+    # Allergen labels may include preparation details, e.g. "soybean oil".
+    # Resolve a known alias embedded as a complete phrase, never as a substring.
+    for alias in sorted(ALLERGEN_NAME_ALIASES, key=len, reverse=True):
+        if alias and re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", normalized_value):
+            return ALLERGEN_NAME_ALIASES[alias]
     return None
 
 
-# =========================================================
-# KIỂM TRA TAG KHÔNG HỖ TRỢ
-# =========================================================
+def normalize_allergen_tag(tag):
+    """Normalize one supported allergen value to its canonical identifier."""
+    return resolve_allergen_tag(tag)
+
+
+def _as_allergen_values(values):
+    if values is None:
+        return []
+    if isinstance(values, (str, bytes)):
+        return [values]
+    try:
+        return list(values)
+    except TypeError:
+        return [values]
+
+
+def normalize_allergen_tags(values):
+    """Normalize a scalar or collection of allergen values to canonical IDs."""
+    return {
+        canonical
+        for value in _as_allergen_values(values)
+        if (canonical := resolve_allergen_tag(value)) is not None
+    }
+
 
 def has_unsupported_allergen_tags(tags):
+    """Return True when a non-empty supplied value has no known mapping."""
+    for value in _as_allergen_values(tags):
+        if value is None or not str(value).strip():
+            continue
+        if resolve_allergen_tag(value) is None:
+            return True
+    return False
+
+
+def should_mark_allergen_result_unknown(
+    user_allergen_tags,
+    product_ingredients=None,
+    product_allergen_tags=None,
+    gemini_allergens=None,
+    may_contain_allergens=None,
+    matches=None,
+):
+    """Decide whether missing or unsupported evidence prevents a result."""
+    user_values = _as_allergen_values(user_allergen_tags)
+    if not any(value is not None and str(value).strip() for value in user_values):
+        return True
+
+    if matches:
+        return False
+
+    has_product_data = any(
+        any(value is not None and str(value).strip() for value in _as_allergen_values(values))
+        for values in (
+            product_ingredients,
+            product_allergen_tags,
+            gemini_allergens,
+            may_contain_allergens,
+        )
+    )
+    if not has_product_data:
+        return True
 
     return any(
-        normalize_allergen_tag(tag)
-        not in ALLERGEN_DEFINITIONS
-        for tag in (tags or set())
+        has_unsupported_allergen_tags(values)
+        for values in (user_allergen_tags, product_allergen_tags, gemini_allergens, may_contain_allergens)
     )
 
-
-# =========================================================
-# LẤY KEYWORD CỦA NHÓM DỊ NGUYÊN
-# =========================================================
 
 def get_allergen_keywords(tag):
     """
@@ -1352,20 +1468,42 @@ def ingredient_matches_allergen(
     Sử dụng word boundary để tránh match sai.
     """
 
-    ingredient_normalized = normalize_text(
+    ingredient_normalized = _normalize_allergen_text(
         ingredient
     )
 
     if not ingredient_normalized:
         return False
 
+    canonical_tag = normalize_allergen_tag(allergen_tag)
+    if resolve_allergen_tag(ingredient) == canonical_tag:
+        return True
+
+    if canonical_tag == "SESAME":
+        raw_ingredient = unicodedata.normalize("NFKC", str(ingredient)).casefold()
+        if re.search(r"(?<!\w)(?:m\u00e8|v\u1eebng)(?!\w)", raw_ingredient):
+            return True
+
     keywords = get_allergen_keywords(
         allergen_tag
     )
 
+    # Match recognized names and ingredient phrases as whole phrases. This
+    # covers Vietnamese compound names while retaining safe word boundaries.
+    aliases = (
+        alias
+        for alias, alias_tag in ALLERGEN_NAME_ALIASES.items()
+        if alias_tag == canonical_tag
+    )
+    for alias in aliases:
+        if not alias:
+            continue
+        if re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", ingredient_normalized):
+            return True
+
     for keyword in keywords:
 
-        keyword_normalized = normalize_text(
+        keyword_normalized = _normalize_allergen_text(
             keyword
         )
 
@@ -1396,29 +1534,8 @@ def ingredient_matches_allergen(
 # =========================================================
 
 def _resolve_allergen_values(values):
-    """
-    Nhận:
-        - en:soybeans
-        - SOJA
-        - soy
-        - Đậu nành
-        - mustard
-        - SENF
-        ...
-
-    Trả về set tag chuẩn.
-    """
-
-    resolved = set()
-
-    for value in values or []:
-
-        tag = resolve_allergen_tag(value)
-
-        if tag:
-            resolved.add(tag)
-
-    return resolved
+    """Return canonical allergen IDs for supported input values."""
+    return normalize_allergen_tags(values)
 
 
 # =========================================================

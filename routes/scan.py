@@ -39,7 +39,7 @@ from services.product_service import (
     get_product_ingredients,
     get_product_allergens,
     check_product_ingredients,
-    has_unsupported_allergen_tags,
+    should_mark_allergen_result_unknown,
     normalize_and_deduplicate_ingredients,
 )
 
@@ -746,20 +746,13 @@ def process_scan():
     # 13. UNKNOWN
     # =====================================================
 
-    match_unknown = (
-
-        not user_allergen_tags
-
-        or has_unsupported_allergen_tags(
-            user_allergen_tags
-        )
-
-        or not (
-            product_ingredients
-            or product_allergens
-            or gemini_allergens
-            or gemini_may_contain_allergens
-        )
+    match_unknown = should_mark_allergen_result_unknown(
+        user_allergen_tags=user_allergen_tags,
+        product_ingredients=product_ingredients,
+        product_allergen_tags=product_allergens,
+        gemini_allergens=gemini_allergens,
+        may_contain_allergens=gemini_may_contain_allergens,
+        matches=allergens,
     )
 
     current_app.logger.info(

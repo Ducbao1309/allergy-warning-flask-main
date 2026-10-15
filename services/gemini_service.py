@@ -320,6 +320,24 @@ LABEL_READING_PROMPT = """Read the food product label in the image and return st
 
 IMPORTANT:
 
+Extraction priorities, in order:
+
+- Product name
+- Brand
+- Ingredients / ingredient list
+- Explicit allergen or "contains" statement
+- Precautionary "may contain" statement and other visible food components
+
+Search the whole image for ingredient and allergen sections in English,
+Vietnamese, or mixed languages. Section headings may include "Ingredients",
+"Ingredients:", "Composition", "Contains", "Allergen information", or
+"May contain", as well as equivalent wording in other languages. Do not
+require a Vietnamese heading to identify an ingredient list.
+
+Keep ingredient wording in the language shown on the package. Do not translate
+or infer ingredients from the product name, brand, product type, or from other
+ingredients. If the text cannot be read, return an empty list for that field.
+
 1. Read the actual ingredient list, not only highlighted, bold, uppercase,
    colored, or otherwise formatted words.
 
@@ -332,8 +350,9 @@ IMPORTANT:
 4. "ingredients" MUST contain only actual ingredients/components of the
    recipe.
 
-5. "allergens" MUST contain allergens that are actually present in the
-   ingredient list.
+5. "allergens" MUST contain allergens explicitly shown in the ingredient
+   list or in an explicit "contains" / allergen statement. Do not infer
+   allergens from the product name or product type.
 
 6. "may_contain_allergens" MUST contain allergens mentioned ONLY in
    precautionary or cross-contact warning statements, for example:
@@ -416,7 +435,12 @@ class InvalidGeminiResponseError(GeminiServiceError):
     """Raised when Gemini returns data outside the expected schema."""
 
 
-def _image_payload(image_path):
+def _emit_diagnostic(diagnostic_callback, stage, **details):
+    if diagnostic_callback is not None:
+        diagnostic_callback(stage, details)
+
+
+def _image_payload(image_path, diagnostic_callback=None):
     logger.info("[GEMINI IMAGE 1] stat started")
     try:
         image_size = Path(image_path).stat().st_size
@@ -451,6 +475,7 @@ def _image_payload(image_path):
             logger.info("[GEMINI IMAGE] EXIF transpose started")
             oriented_image = ImageOps.exif_transpose(source)
             logger.info("[GEMINI IMAGE] EXIF transpose completed")
+            source_dimensions = oriented_image.size
             logger.info("[GEMINI IMAGE] RGB conversion started")
             image = oriented_image.convert("RGB")
             logger.info("[GEMINI IMAGE] RGB conversion completed")
@@ -458,6 +483,14 @@ def _image_payload(image_path):
             logger.info("[GEMINI IMAGE] thumbnail started")
             image.thumbnail((2048, 2048), resampling.LANCZOS)
             logger.info("[GEMINI IMAGE] thumbnail completed")
+            outgoing_dimensions = image.size
+            logger.info(
+                "[GEMINI IMAGE] source_dimensions=%sx%s; outgoing_dimensions=%sx%s; jpeg_quality=85.",
+                source_dimensions[0],
+                source_dimensions[1],
+                outgoing_dimensions[0],
+                outgoing_dimensions[1],
+            )
             logger.info("[GEMINI IMAGE 6] image conversion completed")
             output = BytesIO()
             logger.info("[GEMINI IMAGE 7] JPEG encoding started")
@@ -473,6 +506,18 @@ def _image_payload(image_path):
         "[GEMINI IMAGE 8] base64 encoding completed chars=%s",
         len(encoded_image),
     )
+    _emit_diagnostic(
+        diagnostic_callback,
+        "image",
+        image_file=Path(image_path).name,
+        source_mime_type=mime_type,
+        outgoing_mime_type="image/jpeg",
+        source_dimensions=source_dimensions,
+        processed_dimensions=outgoing_dimensions,
+        jpeg_quality=85,
+        exif_transpose=True,
+        resize_limit=(2048, 2048),
+    )
     return (
         encoded_image,
         "image/jpeg",
@@ -480,7 +525,7 @@ def _image_payload(image_path):
     )
 
 
-def _normalize_response(response_text):
+def _normalize_response(response_text, diagnostic_callback=None):
     if not response_text:
         raise InvalidGeminiResponseError(
             "Gemini returned an empty response."
@@ -497,6 +542,28 @@ def _normalize_response(response_text):
         raise InvalidGeminiResponseError(
             "Gemini returned an invalid data structure."
         )
+
+    logger.info(
+        "[GEMINI] response_fields=%s; ingredients_field_present=%s; ingredients_field_type=%s.",
+        sorted(result),
+        "ingredients" in result,
+        type(result.get("ingredients", [])).__name__,
+    )
+    _emit_diagnostic(
+        diagnostic_callback,
+        "response_fields",
+        response_type=type(result).__name__,
+        response_keys=sorted(result),
+        ingredients_field_present="ingredients" in result,
+        ingredients_raw_type=type(result.get("ingredients")).__name__
+        if "ingredients" in result else "missing",
+        ingredients_raw_value=result.get("ingredients"),
+        allergens_field_present="allergens" in result,
+        allergens_raw_type=type(result.get("allergens")).__name__
+        if "allergens" in result else "missing",
+        allergens_raw_value=result.get("allergens"),
+        raw_product_name=result.get("product_name"),
+    )
 
     product_name = result.get("product_name", "")
     brand = result.get("brand", "")
@@ -528,6 +595,9 @@ def _normalize_response(response_text):
     # ========================================
     # KIỂM TRA INGREDIENTS
     # ========================================
+
+    if isinstance(ingredients, str):
+        ingredients = [ingredients]
 
     if not isinstance(ingredients, list) or not all(
         isinstance(item, str)
@@ -605,7 +675,8 @@ def _normalize_response(response_text):
         "may_contain_allergens": normalized_may_contain,
     }
 
-def analyze_product_image(image_path):
+
+def analyze_product_image(image_path, diagnostic_callback=None):
     """Send a product-label image to Gemini and return structured label data."""
     logger.info(
         "[GEMINI RUNTIME] analyze_product_image ENTERED file=%s",
@@ -622,7 +693,17 @@ def analyze_product_image(image_path):
     image_preparation_started_at = time.perf_counter()
     logger.info("Gemini image preparation started; source=%s", Path(image_path).name)
     logger.info("[GEMINI STAGE 4] calling _image_payload")
-    encoded_image, mime_type, source_mime_type = _image_payload(image_path)
+    encoded_image, mime_type, source_mime_type = _image_payload(
+        image_path,
+        diagnostic_callback=diagnostic_callback,
+    )
+    _emit_diagnostic(
+        diagnostic_callback,
+        "request",
+        model=GEMINI_MODEL,
+        prompt=LABEL_READING_PROMPT,
+        outgoing_mime_type=mime_type,
+    )
     logger.info("[GEMINI STAGE 5] _image_payload returned")
     logger.info(
         "Gemini image prepared after %.2fs; source_mime_type=%s; outgoing_mime_type=%s; payload_base64_chars=%s.",
@@ -734,6 +815,13 @@ def analyze_product_image(image_path):
         
     logger.info("[GEMINI STAGE 9] interactions.create returned")
 
+    _emit_diagnostic(
+        diagnostic_callback,
+        "response_envelope",
+        response_type=type(interaction).__name__,
+        output_text_type=type(getattr(interaction, "output_text", None)).__name__,
+    )
+
     logger.info(
         "Gemini API response received after %.2fs.",
         time.perf_counter() - request_started_at,
@@ -746,7 +834,10 @@ def analyze_product_image(image_path):
     )
     logger.info("[GEMINI STAGE 12] normalizing Gemini response")
     try:
-        label_data = _normalize_response(response_text)
+        label_data = _normalize_response(
+            response_text,
+            diagnostic_callback=diagnostic_callback,
+        )
     except InvalidGeminiResponseError:
         logger.exception(
             "Gemini JSON parsing failed after API response; total_elapsed=%.2fs.",
@@ -755,10 +846,20 @@ def analyze_product_image(image_path):
         raise
     logger.info("[GEMINI STAGE 13] Gemini response normalized")
     logger.info(
-        "Gemini JSON parsed after %.2fs; ingredients=%s; allergens=%s.",
+        "[GEMINI] JSON parsed after %.2fs; product_name=%s; ingredients_count=%s; allergens_count=%s.",
         time.perf_counter() - analysis_started_at,
+        label_data["product_name"],
         len(label_data["ingredients"]),
         len(label_data["allergens"]),
+    )
+    _emit_diagnostic(
+        diagnostic_callback,
+        "parsed_result",
+        parsed_product_name=label_data["product_name"],
+        parsed_ingredients=label_data["ingredients"],
+        parsed_ingredients_count=len(label_data["ingredients"]),
+        parsed_allergens=label_data["allergens"],
+        parsed_allergens_count=len(label_data["allergens"]),
     )
     logger.info("[GEMINI STAGE 14] analyze_product_image completed")
     return label_data

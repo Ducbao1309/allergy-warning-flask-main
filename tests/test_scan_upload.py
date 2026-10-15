@@ -118,7 +118,7 @@ class ScanUploadIntegrationTests(unittest.TestCase):
                 patch("routes.scan.get_product_ingredients", return_value=[]),
                 patch("routes.scan.get_product_allergens", return_value=[]),
                 patch("routes.scan.check_product_ingredients", return_value=[]),
-                patch("routes.scan.has_unsupported_allergen_tags", return_value=False),
+                patch("routes.scan.should_mark_allergen_result_unknown", return_value=True),
             ])
 
         with self.app.app_context(), ExitStack() as stack:
@@ -206,14 +206,15 @@ class ScanUploadIntegrationTests(unittest.TestCase):
         upload_path = Path(self.app.root_path) / "static" / "uploads" / f"{upload_id}.jpg"
         self.uploaded_paths.append(upload_path)
         gemini = Mock(return_value={
-            "product_name": "Test Noodle",
+            "product_name": "Test Granola",
             "brand": "Test Brand",
-            "ingredients": ["wheat flour", "salt"],
-            "allergens": ["wheat"],
+            "ingredients": ["almond", "cashew", "pumpkin seeds", "oats"],
+            "allergens": [],
         })
         user_query = Mock()
         user_query.filter_by.return_value.all.return_value = [
-            SimpleNamespace(allergen=SimpleNamespace(off_tag="en:wheat"))
+            SimpleNamespace(allergen=SimpleNamespace(off_tag="en:tree-nuts")),
+            SimpleNamespace(allergen=SimpleNamespace(off_tag="en:future-allergen")),
         ]
         product_lookup = Mock(return_value=None)
         ingredient_lookup = Mock(return_value=[])
@@ -241,10 +242,6 @@ class ScanUploadIntegrationTests(unittest.TestCase):
                 "routes.scan.get_product_allergens",
                 allergen_lookup,
             ))
-            stack.enter_context(patch(
-                "routes.scan.has_unsupported_allergen_tags",
-                return_value=False,
-            ))
             response = self.client.post(
                 "/scan/process",
                 data={"image": (io.BytesIO(_label_image(800, 450)), "label.jpg")},
@@ -252,16 +249,18 @@ class ScanUploadIntegrationTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"Test Noodle", response.data)
-        self.assertIn(b"wheat flour", response.data)
+        self.assertIn(b"Test Granola", response.data)
+        self.assertIn(b"almond", response.data)
         self.assertIn(b"allergen-item", response.data)
+        self.assertIn(b"status-warning", response.data)
+        self.assertNotIn(b"status-unknown", response.data)
         gemini.assert_called_once()
         gemini_image_path = Path(gemini.call_args.args[0])
         self.assertEqual(gemini_image_path, upload_path)
         self.assertTrue(gemini_image_path.is_file())
         with Image.open(gemini_image_path) as uploaded_image:
             self.assertEqual(uploaded_image.format, "JPEG")
-        product_lookup.assert_called_once_with("Test Noodle", "Test Brand")
+        product_lookup.assert_called_once_with("Test Granola", "Test Brand")
         ingredient_lookup.assert_called_once_with(None)
         allergen_lookup.assert_called_once_with(None)
         user_query.filter_by.assert_called_once_with(user_id="test-user")

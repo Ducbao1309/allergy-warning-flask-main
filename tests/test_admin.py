@@ -43,6 +43,11 @@ class AdminRouteTests(unittest.TestCase):
         query.filter_by.return_value.first.return_value = user or self.admin
         return patch("routes.admin.User", SimpleNamespace(query=query))
 
+    def _auth_user_patch(self, user=None):
+        query = Mock()
+        query.filter_by.return_value.first.return_value = user or self.admin
+        return patch("routes.auth.User", SimpleNamespace(query=query))
+
     def _fake_product_model(self, products=None, total=0, page=1, pages=1):
         products = products or []
         query = Mock()
@@ -70,63 +75,86 @@ class AdminRouteTests(unittest.TestCase):
         )
         return fake_product, query, pagination
 
-    def test_admin_login_success_uses_existing_user_password_hash(self):
-        with self._user_patch(), self.client:
-            login_page = self.client.get("/admin/login")
-            self.assertEqual(login_page.status_code, 200)
-            with self.client.session_transaction() as session:
-                csrf = session["admin_csrf_token"]
-
+    def test_shared_login_redirects_normal_user_to_user_dashboard(self):
+        normal = SimpleNamespace(
+            **{**vars(self.admin), "is_superuser": False}
+        )
+        with self._auth_user_patch(normal), self.client:
             response = self.client.post(
-                "/admin/login",
-                data={"email": self.admin.email, "password": "correct-password", "csrf_token": csrf},
+                "/login",
+                data={"email": normal.email, "password": "correct-password"},
             )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.headers["Location"].endswith("/dashboard"))
+        with self.client.session_transaction() as session:
+            self.assertEqual(session["user_id"], normal.id)
+            self.assertEqual(session["user_email"], normal.email)
+            self.assertEqual(session["user_name"], normal.full_name)
+        with self._user_patch(normal):
+            denied = self.client.get("/admin/")
+        self.assertEqual(denied.status_code, 403)
 
+    def test_shared_login_redirects_active_admin_to_admin_dashboard(self):
+        with self._auth_user_patch(), self.client:
+            response = self.client.post(
+                "/login",
+                data={"email": self.admin.email, "password": "correct-password"},
+            )
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.headers["Location"].endswith("/admin/"))
         with self.client.session_transaction() as session:
             self.assertEqual(session["user_id"], self.admin.id)
             self.assertNotIn("role", session)
 
-    def test_wrong_password_and_normal_user_are_rejected(self):
-        with self._user_patch(), self.client:
-            page = self.client.get("/admin/login")
-            with self.client.session_transaction() as session:
-                csrf = session["admin_csrf_token"]
-            response = self.client.post(
-                "/admin/login",
-                data={"email": self.admin.email, "password": "incorrect", "csrf_token": csrf},
-            )
-        self.assertEqual(response.status_code, 401)
-        self.assertIn("không hợp lệ", response.get_data(as_text=True))
-
-        regular_user = SimpleNamespace(
-            **{**vars(self.admin), "is_superuser": False}
+        product_query = Mock()
+        product_query.count.return_value = 0
+        product_query.filter.return_value.count.return_value = 0
+        fake_product = SimpleNamespace(
+            query=product_query,
+            created_at=_Comparable(),
         )
-        with self._user_patch(regular_user), self.client:
-            self.client.get("/admin/login")
-            with self.client.session_transaction() as session:
-                csrf = session["admin_csrf_token"]
+        with self._user_patch(), patch("routes.admin.Product", fake_product):
+            dashboard = self.client.get("/admin/")
+        self.assertEqual(dashboard.status_code, 200)
+
+    def test_invalid_credentials_through_shared_login_keep_existing_response(self):
+        with self._auth_user_patch(), self.client:
             response = self.client.post(
-                "/admin/login",
-                data={"email": regular_user.email, "password": "correct-password", "csrf_token": csrf},
+                "/login",
+                data={"email": self.admin.email, "password": "incorrect"},
             )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
         with self.client.session_transaction() as session:
             self.assertNotIn("user_id", session)
 
-    def test_anonymous_normal_and_inactive_users_cannot_access_admin(self):
+    def test_inactive_admin_can_not_access_admin_after_shared_login(self):
+        inactive = SimpleNamespace(
+            **{**vars(self.admin), "is_active": False}
+        )
+        with self._auth_user_patch(inactive), self.client:
+            response = self.client.post(
+                "/login",
+                data={"email": inactive.email, "password": "correct-password"},
+            )
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.headers["Location"].endswith("/dashboard"))
+        with self._user_patch(inactive):
+            denied = self.client.get("/admin/")
+        self.assertEqual(denied.status_code, 403)
+
+    def test_legacy_admin_login_url_redirects_to_shared_login(self):
+        self.assertEqual(self.client.get("/admin/login").status_code, 302)
+        response = self.client.post("/admin/login")
+        self.assertTrue(response.headers["Location"].endswith("/login"))
+
+    def test_anonymous_and_normal_users_cannot_access_admin(self):
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/admin/login"))
+        self.assertTrue(response.headers["Location"].endswith("/login"))
 
         self._set_session()
         normal = SimpleNamespace(is_active=True, is_superuser=False)
         with self._user_patch(normal):
-            self.assertEqual(self.client.get("/admin/").status_code, 403)
-
-        inactive = SimpleNamespace(is_active=False, is_superuser=True)
-        with self._user_patch(inactive):
             self.assertEqual(self.client.get("/admin/").status_code, 403)
 
     def test_admin_logout_requires_post_and_clears_session(self):
@@ -135,7 +163,7 @@ class AdminRouteTests(unittest.TestCase):
             self.assertEqual(self.client.get("/admin/logout").status_code, 405)
             response = self.client.post("/admin/logout", data={"csrf_token": "valid-token"})
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/admin/login"))
+        self.assertTrue(response.headers["Location"].endswith("/login"))
         with self.client.session_transaction() as session:
             self.assertNotIn("user_id", session)
 
@@ -181,7 +209,7 @@ class AdminRouteTests(unittest.TestCase):
             "/admin/crawler/start", data={"count": "10", "csrf_token": "valid-token"}
         )
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.headers["Location"].endswith("/admin/login"))
+        self.assertTrue(response.headers["Location"].endswith("/login"))
 
         self._set_session()
         regular_user = SimpleNamespace(is_active=True, is_superuser=False)
@@ -235,7 +263,7 @@ class AdminRouteTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         run_crawler.assert_called_once_with(10)
-        self.assertIn(b"Crawl ho\xc3\xa0n th\xc3\xa0nh", response.data)
+        self.assertIn(b"admin-crawl-status-success", response.data)
         for value in (b">10<", b">7<", b">3<", b">0<"):
             self.assertIn(value, response.data)
 
@@ -251,8 +279,8 @@ class AdminRouteTests(unittest.TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Không thể kết nối Open Food Facts.".encode(), response.data)
-        self.assertIn(b"Th\xe1\xba\xa5t b\xe1\xba\xa1i", response.data)
+        self.assertIn(b"admin-crawl-status-error", response.data)
+        self.assertIn(b"Could not connect to Open Food Facts.", response.data)
         self.assertNotIn(b"Traceback", response.data)
 
     def test_product_delete_uses_custom_confirmation_modal_and_post_form(self):

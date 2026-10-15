@@ -2,6 +2,7 @@ import json
 
 from app import app
 from models import Product, User, UserAllergen
+from services.product_service import normalize_allergen_tag, normalize_allergen_tags
 
 
 def check_product_allergy(user_id, product_id):
@@ -45,8 +46,8 @@ def check_product_allergy(user_id, product_id):
     # LẤY DỊ NGUYÊN CỦA SẢN PHẨM
     # =====================================================
 
-    product_allergens = json.loads(
-        product.allergens_tags or "[]"
+    product_allergens = normalize_allergen_tags(
+        json.loads(product.allergens_tags or "[]")
     )
 
     print()
@@ -66,8 +67,9 @@ def check_product_allergy(user_id, product_id):
     for item in user_allergens:
 
         user_allergen_tag = item.allergen.off_tag
+        canonical_tag = normalize_allergen_tag(user_allergen_tag)
 
-        if user_allergen_tag in product_allergens:
+        if canonical_tag and canonical_tag in product_allergens:
 
             warnings.append({
                 "name": item.allergen.name,

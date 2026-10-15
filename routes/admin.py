@@ -18,7 +18,6 @@ from flask import (
 )
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from werkzeug.security import check_password_hash
 
 from extensions import db
 from models import Product, User
@@ -58,7 +57,7 @@ def admin_required(view_function):
     def wrapped_view(*args, **kwargs):
         user_id = session.get("user_id")
         if not user_id:
-            return redirect(url_for("admin.login"))
+            return redirect(url_for("auth.login"))
 
         try:
             user = User.query.filter_by(id=user_id).first()
@@ -73,7 +72,7 @@ def admin_required(view_function):
 
         if user is None:
             session.clear()
-            return redirect(url_for("admin.login"))
+            return redirect(url_for("auth.login"))
 
         if not user.is_active or not user.is_superuser:
             abort(403)
@@ -86,39 +85,8 @@ def admin_required(view_function):
 
 @admin_bp.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == "GET":
-        return render_template("admin/login.html")
-
-    _require_csrf()
-    email = request.form.get("email", "").strip()
-    password = request.form.get("password", "")
-
-    try:
-        user = User.query.filter_by(email=email).first()
-    except SQLAlchemyError:
-        db.session.rollback()
-        logger.exception("Admin login lookup failed.")
-        return render_template(
-            "admin/error.html",
-            error_title="Không thể đăng nhập lúc này",
-            error_message="Vui lòng thử lại sau.",
-        ), 503
-
-    if (
-        user is None
-        or not check_password_hash(user.hashed_password, password)
-        or not user.is_active
-        or not user.is_superuser
-    ):
-        flash("Thông tin đăng nhập không hợp lệ hoặc không có quyền quản trị.", "error")
-        return render_template("admin/login.html"), 401
-
-    session.clear()
-    session["user_id"] = user.id
-    session["user_email"] = user.email
-    session["user_name"] = user.full_name or user.email
-    flash("Đăng nhập quản trị thành công.", "success")
-    return redirect(url_for("admin.dashboard"))
+    """Keep the legacy URL working while sending everyone to the shared login."""
+    return redirect(url_for("auth.login"))
 
 
 @admin_bp.route("/logout", methods=["POST"])
@@ -127,7 +95,7 @@ def logout():
     _require_csrf()
     session.clear()
     flash("Bạn đã đăng xuất.", "success")
-    return redirect(url_for("admin.login"))
+    return redirect(url_for("auth.login"))
 
 
 @admin_bp.route("/")
@@ -198,6 +166,9 @@ def crawler_start():
         result = {
             "requested_count": requested_count,
             "fetched_count": 0,
+            "pages_fetched": 0,
+            "requests_made": 0,
+            "warnings": [],
             "inserted_count": 0,
             "duplicate_count": 0,
             "error_count": 1,

@@ -1,4 +1,4 @@
-import inspect
+import argparse
 import json
 import logging
 import sys
@@ -13,23 +13,22 @@ if str(PROJECT_ROOT) not in sys.path:
 
 load_dotenv(PROJECT_ROOT / ".env")
 
-from services.gemini_service import analyze_product_image
+from services.gemini_service import (
+    GEMINI_MODEL,
+    LABEL_READING_PROMPT,
+    analyze_product_image,
+)
 
 
 def main():
-    upload_directory = PROJECT_ROOT / "static" / "uploads"
-    image_files = [
-        path
-        for path in upload_directory.iterdir()
-        if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg"}
-    ] if upload_directory.is_dir() else []
-
-    if not image_files:
-        raise FileNotFoundError(
-            f"No JPG/JPEG images found in {upload_directory}"
-        )
-
-    latest_image = max(image_files, key=lambda path: path.stat().st_mtime)
+    parser = argparse.ArgumentParser(
+        description="Run the current Gemini label pipeline against one explicit image."
+    )
+    parser.add_argument("image_path", type=Path, help="Path to the exact scan image to trace")
+    args = parser.parse_args()
+    image_path = args.image_path.expanduser().resolve(strict=True)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     function_code = getattr(analyze_product_image, "__code__", None)
 
     logging.basicConfig(
@@ -40,12 +39,24 @@ def main():
     print(f"module={getattr(analyze_product_image, '__module__', None)}")
     print(f"function={getattr(analyze_product_image, '__name__', None)}")
     print(f"source_file={getattr(function_code, 'co_filename', None)}")
-    print(f"inspect_source_file={inspect.getsourcefile(analyze_product_image)}")
-    print(f"image_file={latest_image}")
+    print(f"image_file={image_path}")
+    print(f"model={GEMINI_MODEL}")
+    print("=== ACTUAL PROMPT ===")
+    print(LABEL_READING_PROMPT)
     print("[GEMINI DIRECT] calling analyze_product_image", flush=True)
 
+    def print_diagnostic(stage, details):
+        print(
+            f"[GEMINI DEBUG] {stage}="
+            f"{json.dumps(details, ensure_ascii=False, default=str)}",
+            flush=True,
+        )
+
     try:
-        result = analyze_product_image(latest_image)
+        result = analyze_product_image(
+            image_path,
+            diagnostic_callback=print_diagnostic,
+        )
     except Exception as error:
         print(
             f"[GEMINI DIRECT] exception_type={type(error).__name__} "

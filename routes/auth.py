@@ -42,6 +42,9 @@ def login():
         session["user_email"] = user.email
         session["user_name"] = user.full_name or user.email
 
+        if user.is_superuser and user.is_active:
+            return redirect(url_for("admin.dashboard"))
+
         return redirect(url_for("main.dashboard"))
 
     return render_template("login.html")
