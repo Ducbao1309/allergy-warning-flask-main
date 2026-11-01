@@ -2,6 +2,7 @@ import os
 import uuid
 import logging
 import inspect
+from services.cloudinary_service import upload_scan_image
 
 from functools import wraps
 from itsdangerous import (
@@ -763,6 +764,7 @@ def process_scan():
     # 14. WARNING STATUS
     # =====================================================
 
+    
     warning_status = (
         "unknown"
         if match_unknown
@@ -771,16 +773,34 @@ def process_scan():
         else "clear"
     )
 
-    image_url = url_for(
-        "static",
-        filename=f"uploads/{filename}",
-    )
+    # =====================================================
+    # 14. UPLOAD ẢNH LÊN CLOUDINARY
+    # =====================================================
+
+    try:
+        image_url = upload_scan_image(filepath)
+
+        current_app.logger.info(
+            "[SCAN] Image uploaded to Cloudinary successfully."
+        )
+
+    except Exception:
+        logger.exception(
+            "[SCAN] Cloudinary image upload failed."
+        )
+
+        # Dự phòng nếu Cloudinary lỗi
+        image_url = url_for(
+            "static",
+            filename=f"uploads/{filename}",
+        )
+
+
+
 
     # =====================================================
     # 15. LƯU HISTORY
     # =====================================================
-
-    history_record = None
 
     try:
 
