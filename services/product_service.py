@@ -1910,3 +1910,29 @@ def check_product_ingredients(
         )
 
     return results
+def detect_allergens_from_ingredients(ingredients):
+    """
+    Nhận diện dị nguyên từ danh sách thành phần,
+    độc lập với hồ sơ dị ứng của người dùng.
+    """
+    detected = {}
+
+    normalized_ingredients = normalize_and_deduplicate_ingredients(
+        ingredients or []
+    )
+
+    for tag, (label, _keywords) in ALLERGEN_DEFINITIONS.items():
+        matched_ingredients = []
+
+        for ingredient in normalized_ingredients:
+            if ingredient_matches_allergen(ingredient, tag):
+                matched_ingredients.append(ingredient)
+
+        if matched_ingredients:
+            detected[tag] = {
+                "tag": tag,
+                "label": label,
+                "ingredients": matched_ingredients,
+            }
+
+    return list(detected.values())

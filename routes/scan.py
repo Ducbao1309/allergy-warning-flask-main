@@ -4,6 +4,16 @@ import logging
 import inspect
 from services.cloudinary_service import upload_scan_image
 
+from services.product_service import (
+    find_product_by_identity,
+    save_scanned_product,
+    get_product_ingredients,
+    get_product_allergens,
+    check_product_ingredients,
+    should_mark_allergen_result_unknown,
+    normalize_and_deduplicate_ingredients,
+    detect_allergens_from_ingredients,
+)
 from functools import wraps
 from itsdangerous import (
     BadSignature,
@@ -645,6 +655,9 @@ def process_scan():
         )
     )
 
+    detected_allergens = detect_allergens_from_ingredients(
+        product_ingredients
+    )
     current_app.logger.info(
         "[SCAN] normalized ingredient count=%s",
         len(product_ingredients),
@@ -780,20 +793,24 @@ def process_scan():
     try:
         image_url = upload_scan_image(filepath)
 
+        if not image_url or not image_url.startswith(
+        "https://res.cloudinary.com/"
+        ):
+            raise RuntimeError("Cloudinary URL không hợp lệ.")
+
         current_app.logger.info(
-            "[SCAN] Image uploaded to Cloudinary successfully."
+        "[SCAN] Cloudinary upload successful."
         )
 
     except Exception:
-        logger.exception(
-            "[SCAN] Cloudinary image upload failed."
+        logger.exception("[SCAN] Cloudinary upload failed.")
+
+        flash(
+        "Không thể lưu ảnh lên hệ thống. Vui lòng thử lại.",
+            "error",
         )
 
-        # Dự phòng nếu Cloudinary lỗi
-        image_url = url_for(
-            "static",
-            filename=f"uploads/{filename}",
-        )
+        return redirect(url_for("scan.scan_page"))
 
 
 
@@ -801,6 +818,8 @@ def process_scan():
     # =====================================================
     # 15. LƯU HISTORY
     # =====================================================
+
+    history_record = None
 
     try:
 
@@ -888,8 +907,8 @@ def process_scan():
                     "may_contain_allergens":
                         gemini_may_contain_allergens,
 
-                    "image_filename":
-                        filename,
+                    "image_url":
+                        image_url,
                 }
             )
         )
@@ -936,16 +955,16 @@ def process_scan():
         product_ingredients=
             product_ingredients,
 
+        detected_allergens=
+            detected_allergens,
+
         product_allergens=
             product_allergens,
 
         allergens=
             allergens,
 
-        image_path=url_for(
-            "static",
-            filename=f"uploads/{filename}",
-        ),
+        image_path=image_url,
 
         history_id=(
             history_record.id
@@ -1031,64 +1050,21 @@ def save_scan_product():
         )
 
     # =====================================================
-    # KIỂM TRA PAYLOAD
+    # KIỂM TRA CLOUDINARY IMAGE URL
     # =====================================================
 
-    image_filename = payload.get(
-        "image_filename",
-        "",
-    )
+    image_url = payload.get("image_url", "")
 
     if (
-        not isinstance(
-            image_filename,
-            str,
-        )
-
-        or os.path.basename(
-            image_filename
-        ) != image_filename
-
-        or os.path.splitext(
-            image_filename
-        )[1].lower()
-        not in {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".webp",
-        }
+        not isinstance(image_url, str)
+        or not image_url.startswith("https://res.cloudinary.com/")
     ):
-
         flash(
-            "Không thể xác định ảnh "
-            "của kết quả quét. "
+            "Không xác định được ảnh sản phẩm trên hệ thống. "
             "Vui lòng quét lại.",
             "error",
         )
-
-        return redirect(
-            url_for("scan.scan_page")
-        )
-
-    image_path = os.path.join(
-        current_app.root_path,
-        "static",
-        "uploads",
-        image_filename,
-    )
-
-    if not os.path.isfile(image_path):
-
-        flash(
-            "Ảnh kết quả quét không còn tồn tại. "
-            "Vui lòng quét lại.",
-            "error",
-        )
-
-        return redirect(
-            url_for("scan.scan_page")
-        )
+        return redirect(url_for("scan.scan_page"))
 
     # =====================================================
     # LƯU PRODUCT
@@ -1097,15 +1073,8 @@ def save_scan_product():
     try:
 
         product, created = save_scanned_product(
-
             payload,
-
-            url_for(
-                "static",
-                filename=(
-                    f"uploads/{image_filename}"
-                ),
-            ),
+            image_url,
         )
 
     except Exception:
