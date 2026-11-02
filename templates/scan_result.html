@@ -201,53 +201,78 @@ Kết quả phân tích | Allergy Warning
 
         <section class="card-panel result-data-panel">
 
-            <div class="section-title-row">
+        <div class="section-title-row">
+        <div>
+            <span class="eyebrow">
+                TRÊN NHÃN SẢN PHẨM
+            </span>
 
-                <div>
+            <h2>
+                Dị nguyên khai báo riêng trên nhãn
+            </h2>
+        </div>
+        </div>
 
-                    <span class="eyebrow">
-                        NỘI DUNG NHẬN DIỆN
-                    </span>
+        {% if gemini_allergens or product_allergens %}
 
-                    <h2>
-                        Thành phần đọc được trên nhãn
-                    </h2>
+        <ul class="tag-list">
 
-                </div>
+            {% for item in gemini_allergens %}
+                <li>{{ item }}</li>
+            {% endfor %}
 
-                <span class="count-badge">
-                    {{ product_ingredients|length }}
-                </span>
+            {% for item in product_allergens %}
+                <li>{{ item }}</li>
+            {% endfor %}
 
-            </div>
+        </ul>
 
+        {% else %}
 
-            {% if product_ingredients %}
+        <p class="muted-copy">
+            Chưa có thông tin dị nguyên khai báo riêng
+            trên nhãn mà hệ thống đọc được.
+        </p>
 
-                <ul class="ingredient-list">
+    {% endif %}
 
-                    {% for ingredient in product_ingredients %}
+    {% set detected_milk = [] %}
 
-                        <li>
-                            {{ ingredient }}
-                        </li>
+    {% for ingredient in product_ingredients %}
+        {% if 'sữa bò tươi' in ingredient|lower %}
+            {% set _ = detected_milk.append(ingredient) %}
+        {% endif %}
+    {% endfor %}
 
-                    {% endfor %}
+    {% if detected_milk %}
 
-                </ul>
+        <p class="muted-copy" style="margin-top: 14px;">
+            Hệ thống đã phát hiện
+            {{ detected_milk|join(', ') }}
+            trong danh sách thành phần.
+        </p>
 
-            {% else %}
+    {% endif %}
 
-                <div class="inline-alert alert-muted">
+    {% if gemini_may_contain_allergens %}
 
-                    Hệ thống chưa đọc rõ được danh sách thành phần.
-                    Bạn nên kiểm tra trực tiếp trên bao bì sản phẩm.
+        <div style="margin-top: 20px;">
 
-                </div>
+            <span class="eyebrow">
+                CÓ THỂ CHỨA VẾT
+            </span>
 
-            {% endif %}
+            <ul class="tag-list">
+                {% for item in gemini_may_contain_allergens %}
+                    <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
 
-        </section>
+        </div>
+
+    {% endif %}
+
+</section>
 
 
         <!-- =================================================
