@@ -1,10 +1,11 @@
-
 import json
 import logging
 import re
 import time
 import unicodedata
 from datetime import datetime
+from pathlib import Path
+from email.utils import parsedate_to_datetime
 
 import requests
 from flask import has_app_context
@@ -15,31 +16,32 @@ from extensions import db
 from models import Product, ProductIngredient
 
 
+# Open Food Facts public API. This is live data retrieved from the website,
+# not an imported JSONL/CSV dump.
 API_URL = "https://world.openfoodfacts.org/api/v2/search"
-DETAIL_URL = "https://world.openfoodfacts.org/api/v2/product"
+PRODUCT_API_URL = "https://world.openfoodfacts.org/api/v2/product"
 
-PAGE_SIZE = 50
-MAX_CRAWL_PAGES = 10
+PAGE_SIZE = 20
+MAX_CRAWL_PAGES = 10  # số trang tối đa mỗi lần bấm cào
+CRAWLER_STATE_FILE = Path(__file__).with_name('.openfoodfacts_crawler_state.json')
 MAX_CRAWL_PRODUCTS = 100
 MAX_DISPLAYED_ERRORS = 10
 MAX_REQUEST_ATTEMPTS = 4
+REQUEST_TIMEOUT = 25
+PAGE_DELAY_SECONDS = 3
+# Giãn cách mọi request (kể cả API chi tiết) để hạn chế HTTP 429.
+MIN_REQUEST_INTERVAL_SECONDS = 6.5
+_LAST_REQUEST_AT = 0.0
+
 RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-REQUEST_TIMEOUT = 30
+FIELDS = (
+    "code,product_name,brands,ingredients_text,allergens,"
+    "allergens_tags,image_url,image_front_url,url,ingredients"
+)
 
 HEADERS = {
-    "User-Agent": "AllergyWarning/1.0 (educational project)"
+    "User-Agent": "AllergyWarning/1.0 (nnanhs22@gmai.com)"
 }
-
-REQUIRED_FIELDS = (
-    "barcode",
-    "name",
-    "brand",
-    "ingredients_text",
-    "allergens_text",
-    "allergens_tags",
-    "image_url",
-    "source_url",
-)
 
 logger = logging.getLogger(__name__)
 
@@ -50,14 +52,10 @@ def normalize_product_text(value):
         return ""
 
     value = unicodedata.normalize("NFKD", str(value).casefold())
-
     value = "".join(
-        char for char in value
-        if not unicodedata.combining(char)
+        char for char in value if not unicodedata.combining(char)
     )
-
     value = re.sub(r"[^a-z0-9]+", " ", value)
-
     return " ".join(value.split())
 
 
@@ -65,196 +63,313 @@ def _text(value):
     """Chỉ nhận giá trị văn bản không rỗng."""
     if not isinstance(value, str):
         return None
-
     value = value.strip()
-
     return value or None
+
+
+
+def _ingredient_key(value):
+    """Khóa so sánh thành phần: bỏ khác biệt hoa/thường, dấu và khoảng trắng."""
+    return normalize_product_text(value)
+
+
+def _ingredient_identity(name, off_tag=None):
+    tag_key = _ingredient_key(off_tag)
+    return f"tag:{tag_key}" if tag_key else f"name:{_ingredient_key(name)}"
+
+
+def _normalized_text_with_positions(value):
+    """Chuẩn hóa chuỗi nhưng vẫn giữ vị trí ký tự gốc để cắt đúng văn bản."""
+    chars = []
+    positions = []
+    for index, char in enumerate(str(value)):
+        normalized = unicodedata.normalize("NFKD", char.casefold())
+        for item in normalized:
+            if unicodedata.combining(item):
+                continue
+            output = item if item.isalnum() else " "
+            if output == " " and (not chars or chars[-1] == " "):
+                continue
+            chars.append(output)
+            positions.append(index)
+
+    while chars and chars[0] == " ":
+        chars.pop(0)
+        positions.pop(0)
+    while chars and chars[-1] == " ":
+        chars.pop()
+        positions.pop()
+    return "".join(chars), positions
+
+
+def _clean_ingredients_text(value):
+    """
+    Lấy phần danh sách thành phần, loại phần hướng dẫn/quảng cáo/nhà sản xuất
+    khi nhận diện được tiêu đề. Không tự suy đoán hoặc dịch tên thành phần.
+    """
+    text_value = _text(value)
+    if not text_value:
+        return ""
+
+    normalized, positions = _normalized_text_with_positions(text_value)
+    start_markers = ("thanh phan", "ingredients", "ingredient")
+    start = None
+    for marker in start_markers:
+        match = re.search(r"\b" + re.escape(marker) + r"\b\s*[:：-]?", normalized)
+        if match:
+            original_index = positions[min(match.end() - 1, len(positions) - 1)]
+            start = original_index + 1
+            break
+    if start is not None:
+        text_value = text_value[start:].lstrip(" \\t:：-")
+
+    normalized, positions = _normalized_text_with_positions(text_value)
+    end_markers = (
+        "huong dan bao quan",
+        "huong dan su dung",
+        "so t ncb",
+        "msd nsx",
+        "san pham cua",
+        "dia chi",
+        "uong bia co trach nhiem",
+        "drink responsibly",
+        "bao quan noi sach",
+    )
+    cut_positions = []
+    for marker in end_markers:
+        match = re.search(r"\b" + re.escape(marker) + r"\b\s*[:：-]?", normalized)
+        if match and match.start() < len(positions):
+            cut_positions.append(positions[match.start()])
+    if cut_positions:
+        text_value = text_value[:min(cut_positions)]
+
+    return text_value.strip(" \\t\\r\\n.;,:-")
+
+
+def _extract_ingredient_rows(product_data):
+    """Tách thành phần từ ingredients_text, sau đó chuẩn hóa bằng từ điển.
+
+    Ưu tiên text gốc vì một số bản ghi ingredients dạng cấu trúc của nguồn có
+    thể chứa nhãn con/chuỗi bị lỗi. Nếu không có text, dùng mảng ingredients.
+    """
+    from services.ingredient_normalizer import normalize_ingredient, split_ingredient_text
+
+    rows = []
+    seen = set()
+
+    raw_text = _text(product_data.get("ingredients_text"))
+    if raw_text:
+        for name in split_ingredient_text(raw_text):
+            normalized = normalize_ingredient(name)
+            key = normalized.get("standard_key") or _ingredient_key(name)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append((name[:255], normalized["normalized_name_en"], None,
+                         normalized["normalized_name"], normalized["normalized_name_en"],
+                         normalized["standard_key"], normalized["normalization_status"]))
+        if rows:
+            return rows
+
+    raw_items = product_data.get("ingredients")
+    if isinstance(raw_items, list):
+        for item in raw_items:
+            if not isinstance(item, dict):
+                continue
+            name = _text(item.get("text") or item.get("name"))
+            if not name:
+                continue
+            off_tag = _text(item.get("id") or item.get("tag"))
+            name_en = _text(item.get("text_en") or item.get("name_en"))
+            normalized = normalize_ingredient(name, off_tag)
+            key = normalized.get("standard_key") or _ingredient_key(name)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            rows.append((name[:255], name_en[:255] if name_en else None, off_tag,
+                         normalized["normalized_name"], normalized["normalized_name_en"],
+                         normalized["standard_key"], normalized["normalization_status"]))
+    return rows
 
 
 def _get_barcode(data):
     value = data.get("code") or data.get("barcode")
-
-    if value is None:
+    if value is None or isinstance(value, bool):
         return None
-
-    if isinstance(value, bool) or not isinstance(value, (str, int)):
+    if not isinstance(value, (str, int)):
         return None
 
     value = str(value).strip()
-
     if not value or len(value) > 50:
         return None
-
     return value
 
 
-def _has_valid_url(value):
+def _valid_url(value):
     value = _text(value)
-
-    if not value:
-        return False
-
-    return value.startswith(("https://", "http://"))
+    return value if value and value.startswith(("https://", "http://")) else None
 
 
 def _extract_product(data):
-    """
-    Chuẩn hóa các trường từ Open Food Facts.
-    Không tự tạo tên, thương hiệu hoặc thông tin dị ứng.
-    """
+    """Chuẩn hóa các trường được trả về từ Open Food Facts."""
     if not isinstance(data, dict):
         return None
 
     barcode = _get_barcode(data)
     name = _text(data.get("product_name") or data.get("name"))
-    brand = _text(data.get("brands") or data.get("brand"))
-
-    ingredients_text = _text(data.get("ingredients_text"))
-    allergens_text = _text(data.get("allergens"))
-
-    image_url = (
-        _text(data.get("image_url"))
-        or _text(data.get("image_front_url"))
-        or _text(data.get("image_front_small_url"))
-    )
-
-    source_url = (
-        _text(data.get("url"))
-        or _text(data.get("source_url"))
-    )
+    if not barcode or not name:
+        return None
 
     raw_tags = data.get("allergens_tags")
+    if raw_tags is not None and not isinstance(raw_tags, list):
+        return None
+    tags = sorted({
+        tag.strip()
+        for tag in (raw_tags or [])
+        if isinstance(tag, str) and tag.strip()
+    })
 
-    if isinstance(raw_tags, list):
-        tags = sorted({
-            tag.strip()
-            for tag in raw_tags
-            if isinstance(tag, str) and tag.strip()
-        })
-    else:
-        tags = []
+    ingredients = data.get("ingredients")
+    if not isinstance(ingredients, list):
+        ingredients = []
 
-    result = {
+    product = {
         "barcode": barcode,
-        "name": name,
-        "brand": brand,
-        "ingredients_text": ingredients_text,
-        "allergens_text": allergens_text,
+        "code": barcode,
+        "name": name[:255],
+        "brand": (_text(data.get("brands") or data.get("brand")) or None),
+        "ingredients_text": _text(data.get("ingredients_text")),
+        "allergens_text": _text(data.get("allergens")),
         "allergens_tags": tags,
-        "image_url": image_url,
-        "source_url": source_url,
-        "ingredients": data.get("ingredients") or [],
+        "image_url": (
+            _valid_url(data.get("image_url"))
+            or _valid_url(data.get("image_front_url"))
+        ),
+        "source_url": (
+            _valid_url(data.get("url"))
+            or f"https://world.openfoodfacts.org/product/{barcode}"
+        ),
+        "ingredients": ingredients,
     }
 
-    return result
+    if product["brand"]:
+        product["brand"] = product["brand"][:255]
+
+    # Barcode and name are enough for a catalog record. Missing allergy data
+    # must remain unknown during matching, not cause the product to be discarded.
+    if len(product["image_url"] or "") > 1000:
+        product["image_url"] = None
+    if len(product["source_url"] or "") > 1000:
+        product["source_url"] = (
+            f"https://world.openfoodfacts.org/product/{barcode}"
+        )
+
+    return product
 
 
-def _missing_required_fields(product):
-    """Trả về các trường bắt buộc đang thiếu hoặc không hợp lệ."""
-    if not product:
-        return list(REQUIRED_FIELDS)
+def _retry_delay(response, attempt):
+    """Ưu tiên Retry-After của máy chủ, nếu không thì dùng exponential backoff."""
+    retry_after = response.headers.get("Retry-After") if response is not None else None
 
-    missing = []
+    if retry_after:
+        try:
+            return min(max(float(retry_after), 1), 120)
+        except (TypeError, ValueError):
+            try:
+                retry_date = parsedate_to_datetime(retry_after)
+                seconds = (retry_date - datetime.now(retry_date.tzinfo)).total_seconds()
+                return min(max(seconds, 1), 120)
+            except (TypeError, ValueError, OverflowError):
+                pass
 
-    for field in REQUIRED_FIELDS:
-        value = product.get(field)
+    # Đợi lâu hơn khi bị giới hạn request (429).
+    if response is not None and response.status_code == 429:
+        return min(15 * attempt, 60)
 
-        if field == "allergens_tags":
-            if not isinstance(value, list) or not value:
-                missing.append(field)
-
-        elif field in ("image_url", "source_url"):
-            if not _has_valid_url(value):
-                missing.append(field)
-
-        elif not _text(value):
-            missing.append(field)
-
-    if product.get("name") and len(product["name"]) > 255:
-        missing.append("name exceeds 255 characters")
-
-    if product.get("brand") and len(product["brand"]) > 255:
-        missing.append("brand exceeds 255 characters")
-
-    if product.get("barcode") and len(product["barcode"]) > 50:
-        missing.append("barcode exceeds 50 characters")
-
-    if product.get("image_url") and len(product["image_url"]) > 1000:
-        missing.append("image_url exceeds 1000 characters")
-
-    if product.get("source_url") and len(product["source_url"]) > 1000:
-        missing.append("source_url exceeds 1000 characters")
-
-    return missing
+    return min(5 * (2 ** (attempt - 1)), 60)
 
 
 def _request_json(url, params=None):
-    """
-    Gửi request có retry khi lỗi mạng, timeout hoặc HTTP tạm thời.
-    Trả về (payload, error, request_count).
-    """
+    """Gửi request JSON với retry đúng số lần cấu hình."""
     request_count = 0
     last_error = None
 
-    for attempt in range(1, MAX_REQUEST_ATTEMPTS + 1):
-        try:
-            request_count += 1
+    global _LAST_REQUEST_AT
 
+    for attempt in range(1, MAX_REQUEST_ATTEMPTS + 1):
+        response = None
+        try:
+            # Giới hạn tốc độ trên toàn crawler, không chỉ giữa các trang.
+            elapsed = time.monotonic() - _LAST_REQUEST_AT
+            wait_time = MIN_REQUEST_INTERVAL_SECONDS - elapsed
+            if wait_time > 0:
+                time.sleep(wait_time)
+
+            request_count += 1
             response = requests.get(
                 url,
                 params=params,
                 headers=HEADERS,
                 timeout=REQUEST_TIMEOUT,
             )
-
+            _LAST_REQUEST_AT = time.monotonic()
             response.raise_for_status()
-
             payload = response.json()
-
             if not isinstance(payload, dict):
-                raise ValueError("API returned invalid JSON structure")
-
+                raise ValueError("Open Food Facts trả về JSON không hợp lệ.")
             return payload, None, request_count
+
+        except requests.exceptions.Timeout as error:
+            last_error = error
+            # Timeout cũng có thể là lỗi mạng tạm thời.
+            if attempt >= MAX_REQUEST_ATTEMPTS:
+                break
+
+        except requests.exceptions.HTTPError as error:
+            last_error = error
+            error_response = getattr(error, "response", None)
+            # requests.Response có thể falsy với status >= 400, nên dùng is not None.
+            failed_response = (
+                error_response if error_response is not None else response
+            )
+            status_code = getattr(failed_response, "status_code", None)
+            if status_code not in RETRYABLE_STATUS_CODES or attempt >= MAX_REQUEST_ATTEMPTS:
+                break
 
         except requests.exceptions.RequestException as error:
             last_error = error
-            status_code = getattr(error.response, "status_code", None)
-
-            retryable = (
-                status_code is None
-                or status_code in RETRYABLE_STATUS_CODES
-            )
-
-            if not retryable or attempt >= MAX_REQUEST_ATTEMPTS:
+            if attempt >= MAX_REQUEST_ATTEMPTS:
                 break
-
-            wait_seconds = min(2 ** (attempt - 1), 16)
-
-            logger.warning(
-                "Request failed. Attempt %s/%s; retry in %s seconds: %s",
-                attempt,
-                MAX_REQUEST_ATTEMPTS,
-                wait_seconds,
-                error,
-            )
-
-            time.sleep(wait_seconds)
 
         except (ValueError, TypeError) as error:
             last_error = error
             break
 
-    logger.error("Request failed after retries: %s", last_error)
+        delay = _retry_delay(response, attempt)
+        logger.warning(
+            "Open Food Facts request lỗi (lần %s/%s): %s. Thử lại sau %s giây.",
+            attempt, MAX_REQUEST_ATTEMPTS, last_error, delay
+        )
+        time.sleep(delay)
 
-    return None, str(last_error or "Unknown API error"), request_count
+    logger.error("Open Food Facts request failed after %s attempts: %s",
+                 request_count, last_error)
+    if isinstance(last_error, requests.exceptions.RequestException):
+        message = (
+            f"Open Food Facts không phản hồi sau {request_count} lần thử "
+            f"({getattr(getattr(last_error, 'response', None), 'status_code', 'lỗi kết nối')})."
+        )
+    else:
+        message = str(last_error or "Invalid API response")
+    return None, message, request_count
 
 
 def fetch_products(page=1, page_size=PAGE_SIZE):
-    """Lấy một trang danh sách sản phẩm."""
+    """Lấy một trang sản phẩm trực tiếp từ Open Food Facts."""
     if (
         isinstance(page, bool)
         or not isinstance(page, int)
-        or not 1 <= page <= MAX_CRAWL_PAGES
+        or page < 1
     ):
         raise ValueError("Invalid page number")
 
@@ -269,227 +384,212 @@ def fetch_products(page=1, page_size=PAGE_SIZE):
         "page_size": page_size,
         "page": page,
         "countries_tags": "en:vietnam",
-        "fields": (
-            "code,product_name,brands,ingredients_text,allergens,"
-            "allergens_tags,image_url,image_front_url,url,ingredients"
-        ),
+        "fields": FIELDS,
     }
 
     payload, error, request_count = _request_json(API_URL, params)
-
     if error:
         return {
             "products": [],
             "errors": [f"Page {page}: {error}"],
             "requests_made": request_count,
             "page_fetched": False,
+            "page_count": 0,
+            "count": 0,
         }
 
     products = payload.get("products")
-
     if not isinstance(products, list):
         return {
             "products": [],
             "errors": [f"Page {page}: API response has no product list."],
             "requests_made": request_count,
             "page_fetched": False,
+            "page_count": 0,
+            "count": 0,
         }
+
+    # Open Food Facts v2: page_count là số sản phẩm trong trang hiện tại,
+    # KHÔNG phải tổng số trang. Tổng số trang phải tính từ count/page_size.
+    total_count = payload.get("count") or 0
+    if isinstance(total_count, bool) or not isinstance(total_count, int) or total_count < 0:
+        total_count = 0
+    total_pages = (total_count + page_size - 1) // page_size if total_count else 0
 
     return {
         "products": products[:page_size],
         "errors": [],
         "requests_made": request_count,
         "page_fetched": True,
+        "page_count": total_pages,
+        "count": total_count,
     }
 
 
-def fetch_product_detail(barcode):
-    """Lấy dữ liệu chi tiết của sản phẩm theo barcode."""
-    if not barcode:
-        return None, "Missing barcode", 0
-
-    url = f"{DETAIL_URL}/{barcode}.json"
-
-    params = {
-        "fields": (
-            "code,product_name,brands,ingredients_text,allergens,"
-            "allergens_tags,image_url,image_front_url,url,ingredients"
-        )
-    }
-
-    payload, error, request_count = _request_json(url, params)
-
-    if error:
-        return None, error, request_count
-
-    if payload.get("status") != 1:
-        return None, "Product detail not found", request_count
-
-    data = payload.get("product")
-
-    if not isinstance(data, dict):
-        return None, "Invalid product detail", request_count
-
-    return data, None, request_count
+def _has_ingredient_data(product):
+    """Chỉ coi sản phẩm đủ dữ liệu khi tách được ít nhất một thành phần hợp lệ."""
+    if not isinstance(product, dict):
+        return False
+    return bool(_extract_ingredient_rows(product))
 
 
 def _load_complete_product(raw_data):
     """
-    Nếu kết quả tìm kiếm thiếu trường, tải lại chi tiết theo barcode.
-    Chỉ trả về sản phẩm nếu đủ tất cả trường bắt buộc.
+    Nếu trang tìm kiếm thiếu thành phần, gọi API chi tiết theo barcode.
+    Không tự tạo thành phần/dị ứng khi nguồn không có dữ liệu.
     """
     product = _extract_product(raw_data)
+    if not product:
+        return None, ["barcode/name"], 0
 
-    if not product or not product.get("barcode"):
-        return None, ["barcode"], 0
+    if _has_ingredient_data(product):
+        return product, [], 0
 
-    missing = _missing_required_fields(product)
+    barcode = product["barcode"]
+    detail_url = f"{PRODUCT_API_URL}/{barcode}"
+    payload, error, request_count = _request_json(
+        detail_url,
+        params={"fields": FIELDS},
+    )
+    if error:
+        return None, ["ingredients (detail API unavailable)"], request_count
 
-    if missing:
-        detail, error, request_count = fetch_product_detail(
-            product["barcode"]
-        )
+    detail = payload.get("product")
+    if not isinstance(detail, dict):
+        return None, ["ingredients (not available at source)"], request_count
 
-        if detail:
-            # Dữ liệu chi tiết được ưu tiên hơn dữ liệu tìm kiếm.
-            detail_product = _extract_product(detail)
+    # Ghép dữ liệu chi tiết lên kết quả tìm kiếm; ưu tiên giá trị có thật.
+    merged = dict(raw_data)
+    for key, value in detail.items():
+        if value not in (None, "", [], {}):
+            merged[key] = value
 
-            if detail_product:
-                product = detail_product
+    complete = _extract_product(merged)
+    if not complete or not _has_ingredient_data(complete):
+        return None, ["ingredients (not provided by Open Food Facts)"], request_count
 
-        elif error:
-            logger.info(
-                "Cannot complete product %s: %s",
-                product["barcode"],
-                error,
-            )
-
-        missing = _missing_required_fields(product)
-
-        if missing:
-            return None, missing, request_count
-
-    return product, [], 0
+    return complete, [], request_count
 
 
-def is_duplicate_product(barcode, name, brand):
-    """Kiểm tra trùng barcode hoặc trùng tên + thương hiệu."""
-    if barcode and Product.query.filter_by(barcode=barcode).first():
-        return True
-
-    normalized_name = normalize_product_text(name)
-    normalized_brand = normalize_product_text(brand)
-
-    if not normalized_name:
+def is_duplicate_product(barcode, name=None, brand=None):
+    """
+    Barcode là định danh ổn định của sản phẩm trên Open Food Facts.
+    Không dùng riêng tên + thương hiệu để loại bản ghi vì các quy cách/
+    hương vị khác nhau có thể cùng tên nhưng có barcode khác nhau.
+    """
+    if not barcode:
         return False
+    return Product.query.filter_by(barcode=str(barcode).strip()).first() is not None
 
-    # Tìm theo tên trước để tránh quét toàn bộ bảng không cần thiết.
-    candidates = Product.query.all()
 
-    for existing in candidates:
-        if normalize_product_text(existing.name) != normalized_name:
-            continue
-
-        existing_brand = normalize_product_text(existing.brand)
-
-        if normalized_brand and existing_brand:
-            if normalized_brand == existing_brand:
-                return True
-
-        elif not normalized_brand and not existing_brand:
-            return True
-
-    return False
+def _missing_required_fields(product):
+    """Validate minimum identity fields; allergy information can be unknown."""
+    if not product:
+        return ["product"]
+    missing = []
+    if not product.get("barcode"):
+        missing.append("barcode")
+    if not _text(product.get("name")):
+        missing.append("name")
+    return missing
 
 
 def save_product(product_data):
-    """Chỉ lưu sản phẩm đầy đủ; trả False nếu trùng hoặc thiếu dữ liệu."""
+    """
+    Lưu sản phẩm mới hoặc bổ sung dữ liệu cho barcode đã có.
+    Trả về False nếu là bản ghi trùng theo khóa tên + thương hiệu.
+    """
     if not isinstance(product_data, dict):
         raise ValueError("Product data must be an object")
 
-    missing = _missing_required_fields(product_data)
+    if "barcode" not in product_data or "name" not in product_data:
+        product_data = _extract_product(product_data)
 
+    missing = _missing_required_fields(product_data)
     if missing:
-        logger.info(
-            "Skipping incomplete product. Missing: %s",
-            ", ".join(missing),
-        )
-        return False
+        raise ValueError("missing " + " and ".join(missing))
 
     barcode = product_data["barcode"]
-    name = product_data["name"]
-    brand = product_data["brand"]
+    existing = Product.query.filter_by(barcode=barcode).first()
+    ingredient_rows = _extract_ingredient_rows(product_data)
 
-    if is_duplicate_product(barcode, name, brand):
+    if existing:
+        # Chỉ cập nhật khi nguồn có giá trị; không ghi đè dữ liệu tốt bằng rỗng.
+        existing.name = product_data.get("name") or existing.name
+        existing.brand = product_data.get("brand") or existing.brand
+        existing.ingredients_text = product_data.get("ingredients_text") or existing.ingredients_text
+        existing.allergens_text = product_data.get("allergens_text") or existing.allergens_text
+        existing.image_url = product_data.get("image_url") or existing.image_url
+        existing.source_url = product_data.get("source_url") or existing.source_url
+
+        incoming_tags = product_data.get("allergens_tags") or []
+        if incoming_tags:
+            try:
+                old_tags = json.loads(existing.allergens_tags or "[]")
+            except (TypeError, ValueError):
+                old_tags = []
+            old_tags = old_tags if isinstance(old_tags, list) else []
+            existing.allergens_tags = json.dumps(
+                sorted(set(old_tags) | set(incoming_tags)),
+                ensure_ascii=False,
+            )
+
+        old_keys = {
+            _ingredient_identity(row.name, row.off_tag)
+            for row in existing.ingredients
+            if _ingredient_key(row.name)
+        }
+        for (ingredient_name, name_en, off_tag, normalized_name,
+             normalized_name_en, standard_key, normalization_status) in ingredient_rows:
+            key = _ingredient_identity(ingredient_name, off_tag)
+            if not _ingredient_key(ingredient_name) or key in old_keys:
+                continue
+            db.session.add(ProductIngredient(
+                product_id=existing.id,
+                name=ingredient_name,
+                name_en=name_en,
+                off_tag=off_tag,
+                normalized_name=normalized_name,
+                normalized_name_en=normalized_name_en,
+                standard_key=standard_key,
+                normalization_status=normalization_status,
+            ))
+            old_keys.add(key)
+
+        db.session.flush()
+        return True
+
+    # Barcode là khóa chống trùng chính; mỗi barcode chỉ có một sản phẩm.
+    if is_duplicate_product(barcode, product_data["name"], product_data.get("brand")):
         return False
-
-    ingredients_text = product_data["ingredients_text"]
-    allergens_text = product_data["allergens_text"]
-    allergens_tags = product_data["allergens_tags"]
-    image_url = product_data["image_url"]
-    source_url = product_data["source_url"]
-
-    # Chuẩn hóa danh sách thành phần, loại bỏ mục trùng.
-    raw_ingredients = product_data.get("ingredients") or []
-
-    if not isinstance(raw_ingredients, list):
-        raw_ingredients = []
-
-    normalized_ingredients = []
-    seen_ingredients = set()
-
-    for item in raw_ingredients:
-        if not isinstance(item, dict):
-            continue
-
-        ingredient_name = _text(item.get("text"))
-
-        if not ingredient_name:
-            continue
-
-        off_tag = _text(item.get("id"))
-
-        key = (
-            normalize_product_text(ingredient_name),
-            normalize_product_text(off_tag),
-        )
-
-        if key in seen_ingredients:
-            continue
-
-        seen_ingredients.add(key)
-
-        normalized_ingredients.append((ingredient_name, off_tag))
 
     product = Product(
         barcode=barcode,
-        name=name,
-        brand=brand,
-        ingredients_text=ingredients_text,
-        allergens_text=allergens_text,
-        allergens_tags=json.dumps(
-            allergens_tags,
-            ensure_ascii=False,
-        ),
-        image_url=image_url,
-        source_url=source_url,
+        name=product_data["name"][:255],
+        brand=product_data.get("brand")[:255] if product_data.get("brand") else None,
+        ingredients_text=product_data.get("ingredients_text"),
+        allergens_text=product_data.get("allergens_text"),
+        allergens_tags=json.dumps(product_data.get("allergens_tags") or [], ensure_ascii=False),
+        image_url=product_data.get("image_url"),
+        source_url=product_data.get("source_url"),
     )
-
     db.session.add(product)
     db.session.flush()
 
-    for ingredient_name, off_tag in normalized_ingredients:
-        db.session.add(
-            ProductIngredient(
-                product_id=product.id,
-                name=ingredient_name,
-                name_en=ingredient_name,
-                off_tag=off_tag,
-            )
-        )
+    for (ingredient_name, name_en, off_tag, normalized_name,
+         normalized_name_en, standard_key, normalization_status) in ingredient_rows:
+        db.session.add(ProductIngredient(
+            product_id=product.id,
+            name=ingredient_name,
+            name_en=name_en,
+            off_tag=off_tag,
+            normalized_name=normalized_name,
+            normalized_name_en=normalized_name_en,
+            standard_key=standard_key,
+            normalization_status=normalization_status,
+        ))
 
     db.session.flush()
-
     return True
 
 
@@ -505,11 +605,14 @@ def _build_result(
     requests_made,
     warnings,
     inserted_products,
+    updated_count=0,
 ):
     if inserted_count >= requested_count:
         status = "success"
     elif inserted_count > 0:
         status = "partial"
+    elif updated_count > 0:
+        status = "updated"
     elif errors:
         status = "error"
     else:
@@ -519,6 +622,7 @@ def _build_result(
         "requested_count": requested_count,
         "fetched_count": fetched_count,
         "inserted_count": inserted_count,
+        "updated_count": updated_count,
         "duplicate_count": duplicate_count,
         "incomplete_count": incomplete_count,
         "error_count": len(errors),
@@ -528,9 +632,7 @@ def _build_result(
         "warnings": warnings[:MAX_DISPLAYED_ERRORS],
         "errors": errors[:MAX_DISPLAYED_ERRORS],
         "started_at": started_at,
-        "finished_at": datetime.now().astimezone().isoformat(
-            timespec="seconds"
-        ),
+        "finished_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "new_products": inserted_products,
     }
 
@@ -538,30 +640,46 @@ def _build_result(
 def _safe_database_error_detail(error):
     original_error = getattr(error, "orig", None)
     detail = str(original_error or error).strip()
-
     detail = re.sub(
         r"(?i)(password|passwd|secret|api[_-]?key|token)"
         r"(\s*[=:]\s*)([^\s,;]+)",
         r"\1\2[redacted]",
         detail,
     )
-
-    detail = re.sub(
-        r"(://[^:/@\s]+:)[^@\s]+@",
-        r"\1[redacted]@",
-        detail,
-    )
-
+    detail = re.sub(r"(://[^:/@\s]+:)[^@\s]+@", r"\1[redacted]@", detail)
     return detail or error.__class__.__name__
 
 
+def _load_crawler_state():
+    """Đọc trang tiếp theo để các lần cào không lặp mãi từ trang 1."""
+    try:
+        if CRAWLER_STATE_FILE.exists():
+            state = json.loads(CRAWLER_STATE_FILE.read_text(encoding="utf-8"))
+            page = state.get("next_page", 1)
+            if isinstance(page, int) and not isinstance(page, bool) and page >= 1:
+                return page
+    except (OSError, ValueError, TypeError):
+        logger.warning("Không đọc được crawler state; bắt đầu lại từ trang 1.")
+    return 1
+
+
+def _save_crawler_state(next_page):
+    """Lưu trang tiếp theo sau mỗi trang đã tải thành công."""
+    try:
+        CRAWLER_STATE_FILE.write_text(
+            json.dumps({"next_page": max(1, int(next_page))}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    except OSError:
+        logger.exception("Không thể lưu vị trí trang crawler.")
+
+
 def _run_crawler_in_context(requested_count):
-    started_at = datetime.now().astimezone().isoformat(
-        timespec="seconds"
-    )
+    started_at = datetime.now().astimezone().isoformat(timespec="seconds")
 
     fetched_count = 0
     inserted_count = 0
+    updated_count = 0
     duplicate_count = 0
     incomplete_count = 0
     pages_fetched = 0
@@ -570,79 +688,99 @@ def _run_crawler_in_context(requested_count):
     errors = []
     warnings = []
     inserted_products = []
+    seen_barcodes = set()
 
-    for page_number in range(1, MAX_CRAWL_PAGES + 1):
+    start_page = _load_crawler_state()
+    current_page = start_page
+
+    for page_offset in range(MAX_CRAWL_PAGES):
         if inserted_count >= requested_count:
             break
 
-        fetch_result = fetch_products(
-            page=page_number,
-            page_size=PAGE_SIZE,
-        )
-
+        page_number = current_page
+        fetch_result = fetch_products(page=page_number, page_size=PAGE_SIZE)
         products = fetch_result["products"]
         errors.extend(fetch_result["errors"])
         requests_made += fetch_result["requests_made"]
 
-        page_succeeded = fetch_result["page_fetched"]
-
-        if page_succeeded:
-            pages_fetched += 1
-        else:
+        if not fetch_result["page_fetched"]:
             warnings.append(
-                f"Không tải được trang {page_number}; "
-                "crawler tiếp tục thử trang sau."
+                f"Không tải được trang {page_number}; crawler dừng để tránh "
+                "gửi thêm request khi máy chủ đang lỗi."
             )
-            time.sleep(2)
-            continue
+            break
 
+        pages_fetched += 1
         fetched_count += len(products)
 
-        for product_number, raw_data in enumerate(products, start=1):
+        api_page_count = fetch_result.get("page_count") or 0
+        if isinstance(api_page_count, int) and api_page_count > 0:
+            next_page = 1 if page_number >= api_page_count else page_number + 1
+        else:
+            next_page = page_number + 1
+        current_page = next_page
+        page_completed = True
+
+        for item_index, raw_data in enumerate(products, start=1):
             if inserted_count >= requested_count:
+                page_completed = False
                 break
 
+            product_number = (page_number - 1) * PAGE_SIZE + item_index
             if not isinstance(raw_data, dict):
                 incomplete_count += 1
+                warnings.append(f"Product {product_number}: dữ liệu sản phẩm không hợp lệ, đã bỏ qua.")
                 continue
 
-            # Kiểm tra sơ bộ để bỏ qua barcode đã tồn tại.
+            raw_barcode = raw_data.get("code", raw_data.get("barcode"))
+            raw_name = raw_data.get("product_name", raw_data.get("name"))
             barcode = _get_barcode(raw_data)
-
-            if not barcode:
+            if raw_barcode is not None and not barcode:
                 incomplete_count += 1
+                warnings.append(f"Product {product_number}: mã vạch không hợp lệ, đã bỏ qua.")
+                continue
+            if not barcode or not _text(raw_name):
+                incomplete_count += 1
+                missing_fields = []
+                if not barcode:
+                    missing_fields.append("barcode")
+                if not _text(raw_name):
+                    missing_fields.append("product name")
+                warnings.append(
+                    f"Product {product_number}: thiếu " + " và ".join(missing_fields) + ", đã bỏ qua."
+                )
+                continue
+            if raw_data.get("allergens_tags") is not None and not isinstance(raw_data.get("allergens_tags"), list):
+                incomplete_count += 1
+                warnings.append(f"Product {product_number}: dữ liệu allergens_tags không hợp lệ, đã bỏ qua.")
                 continue
 
-            if Product.query.filter_by(barcode=barcode).first():
+            # Tránh xử lý lặp cùng barcode trong một lượt cào.
+            if barcode in seen_barcodes:
                 duplicate_count += 1
                 continue
+            seen_barcodes.add(barcode)
 
+            # Barcode đã tồn tại vẫn được kiểm tra để bổ sung trường còn thiếu.
             try:
-                product_data, missing, detail_requests = (
-                    _load_complete_product(raw_data)
-                )
-
+                existed_before = Product.query.filter_by(barcode=barcode).first() is not None
+                product_data, missing, detail_requests = _load_complete_product(raw_data)
                 requests_made += detail_requests
 
                 if not product_data:
                     incomplete_count += 1
-
                     logger.info(
                         "Skipping incomplete product %s; missing=%s",
                         barcode,
                         ", ".join(missing),
                     )
+                    warnings.append(
+                        f"Product {product_number}: thiếu thành phần hợp lệ, đã bỏ qua."
+                    )
                     continue
 
-                # Kiểm tra trùng tên/thương hiệu sau khi có đủ dữ liệu.
-                if is_duplicate_product(
-                    product_data["barcode"],
-                    product_data["name"],
-                    product_data["brand"],
-                ):
-                    duplicate_count += 1
-                    continue
-
+                # save_product tự phân biệt barcode đã tồn tại (bổ sung dữ liệu)
+                # với sản phẩm mới trùng tên/thương hiệu.
                 with db.session.begin_nested():
                     inserted = save_product(product_data)
 
@@ -652,12 +790,12 @@ def _run_crawler_in_context(requested_count):
                     duplicate_count += 1
                     continue
 
+                saved = Product.query.filter_by(barcode=product_data["barcode"]).first()
+                if existed_before:
+                    updated_count += 1
+                    continue
+
                 inserted_count += 1
-
-                saved = Product.query.filter_by(
-                    barcode=product_data["barcode"]
-                ).first()
-
                 if saved:
                     inserted_products.append({
                         "id": saved.id,
@@ -669,66 +807,76 @@ def _run_crawler_in_context(requested_count):
                         "allergens_tags": saved.allergens_tags,
                         "image_url": saved.image_url,
                         "source_url": saved.source_url,
+                        # Template crawler.html đọc trường này để hiển thị
+                        # danh sách ProductIngredient ở cột "Thành phần đã chuẩn hóa".
+                        "normalized_ingredients": [
+                            {
+                                "name": ingredient.name,
+                                "name_en": ingredient.name_en,
+                                "off_tag": ingredient.off_tag,
+                            }
+                            for ingredient in saved.ingredients
+                        ],
                         "created_at": (
-                            saved.created_at.isoformat(
-                                sep=" ", timespec="seconds"
-                            )
-                            if saved.created_at
-                            else ""
+                            saved.created_at.isoformat(sep=" ", timespec="seconds")
+                            if saved.created_at else ""
                         ),
                     })
 
             except IntegrityError as error:
                 db.session.rollback()
-
-                # Nếu có tiến trình khác vừa thêm cùng barcode,
-                # coi đó là bản ghi trùng thay vì làm hỏng toàn bộ crawl.
                 try:
-                    duplicate = Product.query.filter_by(
-                        barcode=barcode
-                    ).first() is not None
+                    duplicate = Product.query.filter_by(barcode=barcode).first() is not None
                 except SQLAlchemyError:
                     db.session.rollback()
                     duplicate = False
-
                 db.session.rollback()
 
                 if duplicate:
                     duplicate_count += 1
                 else:
-                    logger.exception(
-                        "Database integrity error for barcode %s",
-                        barcode,
-                    )
+                    logger.exception("Database integrity error for barcode %s", barcode)
                     errors.append(
-                        "Database integrity error: "
-                        + _safe_database_error_detail(error)
+                        "Database integrity error: " + _safe_database_error_detail(error)
                     )
 
             except SQLAlchemyError as error:
                 db.session.rollback()
-                logger.exception(
-                    "Database error saving barcode %s", barcode
-                )
+                logger.exception("Database error saving barcode %s", barcode)
                 errors.append(
-                    "Database error: "
+                    f"Product {product_number}: database error: "
                     + _safe_database_error_detail(error)
                 )
 
-            except Exception:
+            except Exception as error:
                 db.session.rollback()
-                logger.exception(
-                    "Unexpected crawler error for barcode %s", barcode
-                )
-                errors.append(
-                    f"Không thể xử lý sản phẩm có barcode {barcode}."
-                )
+                logger.exception("Unexpected crawler error for barcode %s", barcode)
+                errors.append(f"Product {product_number}: " + _safe_database_error_detail(error))
 
-        # Nếu API trả ít hơn PAGE_SIZE, có thể đã hết dữ liệu phù hợp.
-        if len(products) < PAGE_SIZE:
+        # Chỉ chuyển sang trang kế tiếp sau khi xử lý hết trang.
+        # Nếu đã đủ số sản phẩm giữa trang, lần sau đọc lại trang này;
+        # barcode đã lưu sẽ tự được nhận diện và bỏ qua, không mất các mục phía sau.
+        _save_crawler_state(next_page if page_completed else page_number)
+
+        # Chỉ dừng khi API xác nhận không còn trang tiếp theo hoặc trang rỗng.
+        if not products:
+            break
+        if api_page_count and page_number >= api_page_count:
+            current_page = 1
+            _save_crawler_state(1)
+            break
+        if not api_page_count and len(products) < PAGE_SIZE:
             break
 
-        time.sleep(1)
+        # Nghỉ giữa các trang để hạn chế bị máy chủ giới hạn.
+        time.sleep(PAGE_DELAY_SECONDS)
+
+    if (
+        inserted_count < requested_count
+        and pages_fetched >= MAX_CRAWL_PAGES
+        and pages_fetched > 0
+    ):
+        warnings.append("Crawler stopped at the safe limit of pages.")
 
     result = _build_result(
         requested_count=requested_count,
@@ -742,25 +890,26 @@ def _run_crawler_in_context(requested_count):
         requests_made=requests_made,
         warnings=warnings,
         inserted_products=inserted_products,
+        updated_count=updated_count,
     )
 
     logger.info(
         "Crawler finished: requested=%s fetched=%s inserted=%s "
-        "duplicates=%s incomplete=%s errors=%s",
+        "updated=%s duplicates=%s incomplete=%s errors=%s requests=%s",
         requested_count,
         fetched_count,
         inserted_count,
+        updated_count,
         duplicate_count,
         incomplete_count,
         result["error_count"],
+        requests_made,
     )
-
     return result
 
 
 def run_crawler(requested_count=MAX_CRAWL_PRODUCTS):
     """Chạy crawler trong Flask application context."""
-
     if (
         isinstance(requested_count, bool)
         or not isinstance(requested_count, int)
@@ -778,4 +927,5 @@ def run_crawler(requested_count=MAX_CRAWL_PRODUCTS):
 
 
 if __name__ == "__main__":
-    run_crawler()
+    result = run_crawler()
+    print(json.dumps(result, ensure_ascii=False, indent=2))

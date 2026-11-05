@@ -794,7 +794,7 @@ def process_scan():
         image_url = upload_scan_image(filepath)
 
         if not image_url or not image_url.startswith(
-        "https://res.cloudinary.com/"
+            "https://res.cloudinary.com/"
         ):
             raise RuntimeError("Cloudinary URL không hợp lệ.")
 
@@ -1053,17 +1053,27 @@ def save_scan_product():
     # KIỂM TRA CLOUDINARY IMAGE URL
     # =====================================================
 
-    image_url = payload.get("image_url", "")
-
-    if (
-        not isinstance(image_url, str)
-        or not image_url.startswith("https://res.cloudinary.com/")
-    ):
+    # Older scan tokens may contain a local upload filename instead of a
+    # Cloudinary URL. Accept only a plain filename (no directory traversal).
+    image_url = payload.get("image_url") or payload.get("image_filename") or ""
+    if not isinstance(image_url, str) or not image_url.strip():
         flash(
             "Không xác định được ảnh sản phẩm trên hệ thống. "
             "Vui lòng quét lại.",
             "error",
         )
+        return redirect(url_for("scan.scan_page"))
+
+    if image_url.startswith("https://"):
+        if not image_url.startswith("https://res.cloudinary.com/"):
+            flash("Đường dẫn ảnh không hợp lệ. Vui lòng quét lại.", "error")
+            return redirect(url_for("scan.scan_page"))
+    elif (
+        image_url != os.path.basename(image_url)
+        or image_url in {".", ".."}
+        or not image_url.lower().endswith((".jpg", ".jpeg", ".png", ".webp"))
+    ):
+        flash("Tên ảnh không hợp lệ. Vui lòng quét lại.", "error")
         return redirect(url_for("scan.scan_page"))
 
     # =====================================================

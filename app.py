@@ -1,3 +1,4 @@
+
 from flask import Flask
 
 from config import Config
@@ -22,7 +23,25 @@ app.config.from_object(Config)
 
 
 # =========================================================
-# KẾT NỐI DATABASE
+# CẤU HÌNH KẾT NỐI DATABASE
+# =========================================================
+
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 1800,
+    "pool_timeout": 30,
+    "pool_size": 5,
+    "max_overflow": 10,
+    "connect_args": {
+        "connect_timeout": 10
+    }
+}
+
+
+# =========================================================
+# KHỞI TẠO DATABASE
 # =========================================================
 
 db.init_app(app)
@@ -33,18 +52,13 @@ db.init_app(app)
 # =========================================================
 
 app.register_blueprint(main_bp)
-
 app.register_blueprint(auth_bp)
-
 app.register_blueprint(scan_bp)
-
 app.register_blueprint(profile_bp)
-
 app.register_blueprint(product_bp)
-
 app.register_blueprint(history_bp)
-
 app.register_blueprint(admin_bp)
+
 
 # =========================================================
 # RUN

@@ -294,6 +294,14 @@ class ProductIngredient(db.Model):
         nullable=True
     )
 
+    # Kết quả chuẩn hóa được lưu riêng, không ghi đè tên gốc từ Open Food Facts.
+    normalized_name = db.Column(db.String(255), nullable=True)
+    normalized_name_en = db.Column(db.String(255), nullable=True)
+    standard_key = db.Column(db.String(120), nullable=True, index=True)
+    normalization_status = db.Column(
+        db.String(20), nullable=False, default="pending", server_default="pending"
+    )
+
     product = db.relationship(
         "Product",
         back_populates="ingredients"

@@ -248,7 +248,23 @@ def product_detail(product_id):
         ), 503
     if product is None:
         abort(404)
-    return render_template("admin/product_detail.html", product=product)
+
+    # Tạo kết quả chuẩn hóa khi đọc trang chi tiết; không phụ thuộc hồ sơ dị ứng.
+    from services.ingredient_normalizer import build_normalized_ingredients
+    normalized_ingredients = build_normalized_ingredients(product)
+    matched_count = sum(
+        1 for item in normalized_ingredients
+        if item.get("normalization_status") == "matched"
+    )
+    unmatched_count = len(normalized_ingredients) - matched_count
+
+    return render_template(
+        "admin/product_detail.html",
+        product=product,
+        normalized_ingredients=normalized_ingredients,
+        matched_count=matched_count,
+        unmatched_count=unmatched_count,
+    )
 
 
 def _product_form_values(product):

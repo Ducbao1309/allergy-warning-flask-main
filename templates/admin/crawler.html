@@ -73,6 +73,8 @@
           Đã thêm đủ số sản phẩm yêu cầu
         {% elif result.status == 'partial' %}
           Đã thêm được một phần sản phẩm
+        {% elif result.status == 'updated' %}
+          Đã bổ sung dữ liệu cho sản phẩm có sẵn
         {% elif result.status == 'no_new' %}
           Không có sản phẩm mới đạt yêu cầu
         {% else %}
@@ -86,6 +88,8 @@
         Hoàn thành
       {% elif result.status == 'partial' %}
         Một phần
+      {% elif result.status == 'updated' %}
+        Đã cập nhật dữ liệu
       {% elif result.status == 'no_new' %}
         Không có dữ liệu mới
       {% else %}
@@ -108,6 +112,11 @@
     <div>
       <dt>Sản phẩm mới đã lưu</dt>
       <dd>{{ result.inserted_count }}</dd>
+    </div>
+
+    <div>
+      <dt>Sản phẩm được bổ sung dữ liệu</dt>
+      <dd>{{ result.updated_count|default(0) }}</dd>
     </div>
 
     <div>
@@ -196,8 +205,9 @@
             <th style="padding: 12px; text-align: left;">Barcode</th>
             <th style="padding: 12px; text-align: left;">Tên sản phẩm</th>
             <th style="padding: 12px; text-align: left;">Thương hiệu</th>
-            <th style="padding: 12px; text-align: left;">Thành phần</th>
-            <th style="padding: 12px; text-align: left;">Dị ứng</th>
+            <th style="padding: 12px; text-align: left;">Thành phần gốc</th>
+            <th style="padding: 12px; text-align: left;">Thành phần đã chuẩn hóa</th>
+            <th style="padding: 12px; text-align: left;">Dị ứng từ nguồn</th>
             <th style="padding: 12px; text-align: left;">Mã dị ứng</th>
             <th style="padding: 12px; text-align: left;">Nguồn</th>
             <th style="padding: 12px; text-align: left;">Ngày thêm</th>
@@ -236,16 +246,35 @@
                 {{ product.brand }}
               </td>
 
-              <td style="padding: 12px; min-width: 220px;">
-                {{ product.ingredients_text }}
+              <td style="padding: 12px; min-width: 220px; white-space: pre-wrap;">
+                {{ product.ingredients_text or "Nguồn không cung cấp" }}
+              </td>
+
+              <td style="padding: 12px; min-width: 260px;">
+                {% if product.normalized_ingredients %}
+                  <details>
+                    <summary>{{ product.normalized_ingredients|length }} thành phần</summary>
+                    <ul>
+                      {% for ingredient in product.normalized_ingredients %}
+                        <li>
+                          <strong>{{ ingredient.name }}</strong>
+                          {% if ingredient.name_en %}<span> ({{ ingredient.name_en }})</span>{% endif %}
+                          {% if ingredient.off_tag %}<small> — {{ ingredient.off_tag }}</small>{% endif %}
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  </details>
+                {% else %}
+                  Chưa chuẩn hóa được
+                {% endif %}
               </td>
 
               <td style="padding: 12px; min-width: 160px;">
-                {{ product.allergens_text }}
+                {{ product.allergens_text or "Nguồn không cung cấp" }}
               </td>
 
               <td style="padding: 12px; min-width: 160px;">
-                {{ product.allergens_tags }}
+                {{ product.allergens_tags or "[]" }}
               </td>
 
               <td style="padding: 12px;">
@@ -273,6 +302,43 @@
     </p>
   {% endif %}
 </section>
+
+{% if result.updated_products %}
+<section class="admin-crawl-result card-panel" style="margin-top: 24px;">
+  <header class="admin-crawl-result-heading">
+    <div>
+      <span class="eyebrow">DATA ENRICHMENT</span>
+      <h2>Sản phẩm cũ vừa được bổ sung dữ liệu</h2>
+      <p>Các sản phẩm này đã tồn tại theo barcode, crawler chỉ bổ sung thông tin còn thiếu, không tạo bản ghi mới.</p>
+    </div>
+    <span class="admin-crawl-status">{{ result.updated_products|length }} sản phẩm</span>
+  </header>
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse;">
+      <thead><tr>
+        <th style="padding: 12px; text-align: left;">Barcode</th>
+        <th style="padding: 12px; text-align: left;">Tên sản phẩm</th>
+        <th style="padding: 12px; text-align: left;">Thành phần chuẩn hóa</th>
+      </tr></thead>
+      <tbody>
+        {% for product in result.updated_products %}
+        <tr>
+          <td style="padding: 12px;">{{ product.barcode }}</td>
+          <td style="padding: 12px;">{{ product.name }}</td>
+          <td style="padding: 12px;">
+            {% if product.normalized_ingredients %}
+              {% for ingredient in product.normalized_ingredients %}
+                <span>{{ ingredient.name }}{% if not loop.last %}, {% endif %}</span>
+              {% endfor %}
+            {% else %}Chưa chuẩn hóa được{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
 
 {% endif %}
 

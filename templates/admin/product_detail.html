@@ -38,13 +38,38 @@
 </section>
 
 <section class="admin-detail-card card-panel admin-ingredients-panel">
-  <h2>Thành phần đã chuẩn hóa <span class="admin-inline-count">{{ product.ingredients|length }}</span></h2>
-  {% if product.ingredients %}
+  <div class="admin-table-heading">
+    <div>
+      <h2>Thành phần đã chuẩn hóa <span class="admin-inline-count">{{ normalized_ingredients|length }}</span></h2>
+      <p class="muted-copy">Giữ nguyên tên gốc từ nhãn; tên chuẩn được ánh xạ bằng từ điển bí danh.</p>
+    </div>
+    <div class="admin-detail-summary">
+      <span class="admin-inline-count">Đã nhận diện: {{ matched_count }}</span>
+      <span class="admin-inline-count">Chưa nhận diện: {{ unmatched_count }}</span>
+    </div>
+  </div>
+  {% if normalized_ingredients %}
   <div class="admin-table-scroll"><table class="admin-table">
-    <thead><tr><th>Tên</th><th>Tên tiếng Anh</th><th>Open Food Facts tag</th></tr></thead>
-    <tbody>{% for ingredient in product.ingredients %}<tr><td>{{ ingredient.name }}</td><td>{{ ingredient.name_en or "—" }}</td><td>{{ ingredient.off_tag or "—" }}</td></tr>{% endfor %}</tbody>
+    <thead><tr><th>Thành phần gốc</th><th>Tên chuẩn tiếng Việt</th><th>Tên chuẩn tiếng Anh</th><th>OFF tag</th><th>Trạng thái</th></tr></thead>
+    <tbody>
+      {% for ingredient in normalized_ingredients %}
+      <tr>
+        <td>{{ ingredient.name }}</td>
+        <td>{{ ingredient.normalized_name or "Chưa có ánh xạ" }}</td>
+        <td>{{ ingredient.normalized_name_en or "—" }}</td>
+        <td>{{ ingredient.off_tag or "—" }}</td>
+        <td>
+          {% if ingredient.normalization_status == "matched" %}
+            <span class="admin-inline-count">Đã nhận diện</span>
+          {% else %}
+            <span class="muted-copy">Chưa nhận diện</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
   </table></div>
-  {% else %}<p class="muted-copy">Sản phẩm chưa có các dòng ProductIngredient.</p>{% endif %}
+  {% else %}<p class="muted-copy">Nguồn chưa cung cấp danh sách thành phần có thể tách.</p>{% endif %}
 </section>
 
 <section class="admin-delete-panel">
