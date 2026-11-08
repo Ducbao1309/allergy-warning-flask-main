@@ -1,16 +1,155 @@
+
 {% extends "base.html" %}
 {% block title %}Tạo tài khoản | Allergy Warning{% endblock %}
+
 {% block content %}
-<div class="auth-layout content-shell"><section class="auth-aside"><span class="eyebrow">BẮT ĐẦU TỪ HỒ SƠ CỦA BẠN</span><h1>Thông tin dị ứng, trong tầm tay.</h1><p>Tạo tài khoản để lưu hồ sơ dị ứng và xem lại kết quả kiểm tra nhãn của riêng bạn.</p><div class="auth-aside-mark">A<span>+</span></div></section>
-  <section class="auth-card"><span class="eyebrow">TẠO TÀI KHOẢN</span><h2>Đăng ký</h2><p class="form-lead">Điền thông tin để bắt đầu sử dụng.</p>
-    <form method="POST" action="{{ url_for('auth.register') }}" class="stack-form">
-      <div class="form-group"><label for="full_name">Họ và tên</label><input id="full_name" type="text" name="full_name" autocomplete="name" placeholder="Tên của bạn"></div>
-      <div class="form-group"><label for="email">Email</label><input id="email" type="email" name="email" autocomplete="email" placeholder="ten@email.com" required></div>
-      <div class="form-group"><label for="password">Mật khẩu</label><input id="password" type="password" name="password" autocomplete="new-password" placeholder="Tạo mật khẩu" required></div>
-      <div class="form-group"><label for="confirm_password">Xác nhận mật khẩu</label><input id="confirm_password" type="password" name="confirm_password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required></div>
-      <button type="submit" class="btn btn-primary full-width">Tạo tài khoản</button>
-    </form>
-    <p class="auth-switch">Đã có tài khoản? <a href="{{ url_for('auth.login') }}">Đăng nhập</a></p>
-  </section>
+<div class="auth-layout content-shell">
+    <section class="auth-aside">
+        <span class="eyebrow">BẮT ĐẦU TỪ HỒ SƠ CỦA BẠN</span>
+        <h1>Thông tin dị ứng, trong tầm tay.</h1>
+        <p>Tạo tài khoản để lưu hồ sơ dị ứng và xem lại kết quả kiểm tra nhãn của riêng bạn.</p>
+        <div class="auth-aside-mark">A<span>+</span></div>
+    </section>
+
+    <section class="auth-card">
+        <span class="eyebrow">TẠO TÀI KHOẢN</span>
+        <h2>Đăng ký</h2>
+        <p class="form-lead">Điền thông tin để bắt đầu sử dụng.</p>
+
+        <form method="POST" action="{{ url_for('auth.register') }}" class="stack-form">
+
+            <div class="form-group">
+                <label for="full_name">Họ và tên</label>
+                <input
+                    id="full_name"
+                    type="text"
+                    name="full_name"
+                    autocomplete="name"
+                    placeholder="Tên của bạn"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    autocomplete="email"
+                    placeholder="ten@email.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mật khẩu</label>
+
+                <div class="password-wrapper">
+                    <input
+                        id="password"
+                        type="password"
+                        name="password"
+                        autocomplete="new-password"
+                        placeholder="Tạo mật khẩu"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        onclick="togglePassword('password', this)"
+                        aria-label="Hiện mật khẩu"
+                        title="Hiện mật khẩu"
+                    >
+                        <svg viewBox="0 0 24 24" width="20" height="20"
+                             fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="confirm_password">Xác nhận mật khẩu</label>
+
+                <div class="password-wrapper">
+                    <input
+                        id="confirm_password"
+                        type="password"
+                        name="confirm_password"
+                        autocomplete="new-password"
+                        placeholder="Nhập lại mật khẩu"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="toggle-password"
+                        onclick="togglePassword('confirm_password', this)"
+                        aria-label="Hiện mật khẩu"
+                        title="Hiện mật khẩu"
+                    >
+                        <svg viewBox="0 0 24 24" width="20" height="20"
+                             fill="none" stroke="currentColor"
+                             stroke-width="2" stroke-linecap="round"
+                             stroke-linejoin="round">
+                            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary full-width">
+                Tạo tài khoản
+            </button>
+        </form>
+
+        <p class="auth-switch">
+            Đã có tài khoản?
+            <a href="{{ url_for('auth.login') }}">Đăng nhập</a>
+        </p>
+    </section>
 </div>
+
+<script>
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
+
+    if (input.type === "password") {
+        input.type = "text";
+        button.setAttribute("aria-label", "Ẩn mật khẩu");
+        button.setAttribute("title", "Ẩn mật khẩu");
+
+        button.innerHTML = `
+            <svg viewBox="0 0 24 24" width="20" height="20"
+                 fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <path d="M3 3l18 18"/>
+                <path d="M10.6 10.6a2 2 0 002.8 2.8"/>
+                <path d="M9.9 5.2A10.8 10.8 0 0112 5c6.5 0 10 7 10 7a15.5 15.5 0 01-4 4.5"/>
+                <path d="M6.2 6.2C3.5 8 2 12 2 12s3.5 7 10 7c1.2 0 2.3-.2 3.3-.6"/>
+            </svg>
+        `;
+    } else {
+        input.type = "password";
+        button.setAttribute("aria-label", "Hiện mật khẩu");
+        button.setAttribute("title", "Hiện mật khẩu");
+
+        button.innerHTML = `
+            <svg viewBox="0 0 24 24" width="20" height="20"
+                 fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round"
+                 stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </svg>
+        `;
+    }
+}
+</script>
 {% endblock %}

@@ -196,83 +196,39 @@ Kết quả phân tích | Allergy Warning
 
 
         <!-- =================================================
-             INGREDIENTS
+             INGREDIENTS - TOÀN BỘ THÀNH PHẦN
         ================================================== -->
 
         <section class="card-panel result-data-panel">
 
-        <div class="section-title-row">
-        <div>
-            <span class="eyebrow">
-                TRÊN NHÃN SẢN PHẨM
-            </span>
+            <div class="section-title-row">
+                <div>
+                    <span class="eyebrow">TRÊN NHÃN SẢN PHẨM</span>
+                    <h2>Bảng thành phần sản phẩm</h2>
+                    <p class="muted-copy">
+                        Danh sách các thành phần hệ thống đọc được từ nhãn sản phẩm.
+                    </p>
+                </div>
+            </div>
 
-            <h2>
-                Dị nguyên khai báo riêng trên nhãn
-            </h2>
-        </div>
-        </div>
+            {% if product_ingredients %}
+                <ol class="ingredient-list">
+                    {% for ingredient in product_ingredients %}
+                        <li>{{ ingredient }}</li>
+                    {% endfor %}
+                </ol>
 
-        {% if gemini_allergens or product_allergens %}
+                <p class="muted-copy" style="margin-top: 12px;">
+                    Tổng số thành phần đọc được: {{ product_ingredients|length }}
+                </p>
+            {% else %}
+                <p class="muted-copy">
+                    Chưa đọc được danh sách thành phần từ nhãn sản phẩm.
+                    Vui lòng thử lại với ảnh rõ nét hơn.
+                </p>
+            {% endif %}
 
-        <ul class="tag-list">
-
-            {% for item in gemini_allergens %}
-                <li>{{ item }}</li>
-            {% endfor %}
-
-            {% for item in product_allergens %}
-                <li>{{ item }}</li>
-            {% endfor %}
-
-        </ul>
-
-        {% else %}
-
-        <p class="muted-copy">
-            Chưa có thông tin dị nguyên khai báo riêng
-            trên nhãn mà hệ thống đọc được.
-        </p>
-
-    {% endif %}
-
-    {% set detected_milk = [] %}
-
-    {% for ingredient in product_ingredients %}
-        {% if 'sữa bò tươi' in ingredient|lower %}
-            {% set _ = detected_milk.append(ingredient) %}
-        {% endif %}
-    {% endfor %}
-
-    {% if detected_milk %}
-
-        <p class="muted-copy" style="margin-top: 14px;">
-            Hệ thống đã phát hiện
-            {{ detected_milk|join(', ') }}
-            trong danh sách thành phần.
-        </p>
-
-    {% endif %}
-
-    {% if gemini_may_contain_allergens %}
-
-        <div style="margin-top: 20px;">
-
-            <span class="eyebrow">
-                CÓ THỂ CHỨA VẾT
-            </span>
-
-            <ul class="tag-list">
-                {% for item in gemini_may_contain_allergens %}
-                    <li>{{ item }}</li>
-                {% endfor %}
-            </ul>
-
-        </div>
-
-    {% endif %}
-
-</section>
+        </section>
 
 
         <!-- =================================================
@@ -363,22 +319,40 @@ Kết quả phân tích | Allergy Warning
 
 
     <!-- =====================================================
-         CHẤT GÂY DỊ ỨNG TÌM THẤY VÀ ĐỐI CHIẾU HỒ SƠ
+         THÀNH PHẦN TRÙNG VỚI HỒ SƠ DỊ ỨNG
     ====================================================== -->
+
+    {% set matched_detected_allergens = [] %}
+
+    {% for item in detected_allergens %}
+        {% set matched_personal = namespace(found=false) %}
+
+        {% for personal_item in contains_results %}
+            {% if personal_item.tag == item.tag or personal_item.allergen == item.label %}
+                {% set matched_personal.found = true %}
+            {% endif %}
+        {% endfor %}
+
+        {% if matched_personal.found %}
+            {% set _ = matched_detected_allergens.append(item) %}
+        {% endif %}
+    {% endfor %}
 
     <section class="card-panel match-panel" style="margin-top: 24px; padding: 24px;">
         <span class="eyebrow">KẾT QUẢ KIỂM TRA THÀNH PHẦN</span>
-        <h2>Chất có khả năng gây dị ứng tìm thấy</h2>
+        <h2>Thành phần trùng với hồ sơ dị ứng của bạn</h2>
+
         <p class="muted-copy">
-            Đây là các chất hệ thống nhận diện trong danh sách thành phần.
-            Nhãn bên dưới cho biết chất nào trùng với hồ sơ dị ứng bạn đã khai báo.
+            Chỉ hiển thị những chất được nhận diện trong danh sách thành phần
+            và đồng thời trùng với hồ sơ dị ứng bạn đã khai báo.
         </p>
 
-        {% if detected_allergens %}
+        {% if matched_detected_allergens %}
             <div class="match-list">
-                {% for item in detected_allergens %}
+                {% for item in matched_detected_allergens %}
                     <article class="allergen-item">
                         <strong>{{ item.label or item.tag }}</strong>
+
                         {% if item.ingredients %}
                             <p>
                                 Được nhận diện từ:
@@ -388,30 +362,18 @@ Kết quả phân tích | Allergy Warning
                             </p>
                         {% endif %}
 
-                        {% set matched_personal = namespace(found=false) %}
-                        {% for personal_item in contains_results %}
-                            {% if personal_item.tag == item.tag or personal_item.allergen == item.label %}
-                                {% set matched_personal.found = true %}
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if matched_personal.found %}
-                            <p class="inline-alert alert-warning" style="margin-top: 12px; padding: 12px;">
-                                <strong>Trùng với hồ sơ dị ứng của bạn.</strong>
-                                Không nên sử dụng sản phẩm nếu bạn đã được xác nhận dị ứng với chất này.
-                            </p>
-                        {% else %}
-                            <p class="muted-copy" style="margin-top: 8px;">
-                                Chất này chưa được xác định là trùng với hồ sơ dị ứng hiện tại.
-                            </p>
-                        {% endif %}
+                        <p class="inline-alert alert-warning" style="margin-top: 12px; padding: 12px;">
+                            <strong>Trùng với hồ sơ dị ứng của bạn.</strong>
+                            Không nên sử dụng sản phẩm nếu bạn đã được xác nhận dị ứng với chất này.
+                        </p>
                     </article>
                 {% endfor %}
             </div>
         {% else %}
             <p class="muted-copy">
-                Chưa nhận diện được chất gây dị ứng cụ thể từ danh sách thành phần
-                đã đọc. Điều này không đảm bảo sản phẩm không chứa chất gây dị ứng.
+                Không tìm thấy thành phần nào vừa được nhận diện là dị nguyên
+                vừa trùng với hồ sơ dị ứng hiện tại của bạn.
+                Điều này không đảm bảo sản phẩm không chứa chất gây dị ứng.
             </p>
         {% endif %}
     </section>
@@ -523,6 +485,31 @@ Kết quả phân tích | Allergy Warning
 
 
     <!-- =====================================================
+         NỘI DUNG PHÂN TÍCH
+    ====================================================== -->
+
+    <details class="card-panel extracted-text" style="margin-top: 20px; padding: 20px 24px;">
+        <summary>Cách đọc kết quả và nội dung phân tích</summary>
+        <div style="padding: 16px 4px 4px;">
+            <h3>Cách hiểu các mục trên trang</h3>
+            <ul class="ingredient-list">
+                <li><strong>Thành phần đọc được:</strong> nguyên liệu hệ thống trích xuất từ ảnh nhãn.</li>
+                <li><strong>Chất có khả năng gây dị ứng tìm thấy:</strong> chất được nhận diện trong danh sách nguyên liệu.</li>
+                <li><strong>Nhà sản xuất cảnh báo:</strong> thông tin “Chứa…” hoặc “Có thể chứa…” được ghi riêng trên nhãn.</li>
+                <li><strong>Trùng với hồ sơ dị ứng:</strong> chất có trong sản phẩm đồng thời nằm trong hồ sơ dị ứng bạn đã khai báo.</li>
+            </ul>
+            <p class="muted-copy">
+                Kết quả phụ thuộc vào chất lượng ảnh và khả năng đọc nhãn.
+                Hãy đối chiếu với bao bì thật. Nếu bạn có dị ứng nghiêm trọng,
+                không nên chỉ dựa vào kết quả tự động để quyết định sử dụng sản phẩm.
+            </p>
+        </div>
+        <h3>Nội dung hệ thống đọc được từ ảnh</h3>
+        <div class="ocr-text">{{ text }}</div>
+    </details>
+
+
+    <!-- =====================================================
          SAVE PRODUCT
     ====================================================== -->
 
@@ -568,31 +555,6 @@ Kết quả phân tích | Allergy Warning
 
     {% endif %}
 
-
-
-    <!-- =====================================================
-         NỘI DUNG PHÂN TÍCH
-    ====================================================== -->
-
-    <details class="card-panel extracted-text" style="margin-top: 20px; padding: 20px 24px;">
-        <summary>Cách đọc kết quả và nội dung phân tích</summary>
-        <div style="padding: 16px 4px 4px;">
-            <h3>Cách hiểu các mục trên trang</h3>
-            <ul class="ingredient-list">
-                <li><strong>Thành phần đọc được:</strong> nguyên liệu hệ thống trích xuất từ ảnh nhãn.</li>
-                <li><strong>Chất có khả năng gây dị ứng tìm thấy:</strong> chất được nhận diện trong danh sách nguyên liệu.</li>
-                <li><strong>Nhà sản xuất cảnh báo:</strong> thông tin “Chứa…” hoặc “Có thể chứa…” được ghi riêng trên nhãn.</li>
-                <li><strong>Trùng với hồ sơ dị ứng:</strong> chất có trong sản phẩm đồng thời nằm trong hồ sơ dị ứng bạn đã khai báo.</li>
-            </ul>
-            <p class="muted-copy">
-                Kết quả phụ thuộc vào chất lượng ảnh và khả năng đọc nhãn.
-                Hãy đối chiếu với bao bì thật. Nếu bạn có dị ứng nghiêm trọng,
-                không nên chỉ dựa vào kết quả tự động để quyết định sử dụng sản phẩm.
-            </p>
-        </div>
-        <h3>Nội dung hệ thống đọc được từ ảnh</h3>
-        <div class="ocr-text">{{ text }}</div>
-    </details>
 
 
     <!-- =====================================================
