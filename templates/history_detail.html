@@ -1,19 +1,177 @@
 {% extends "base.html" %}
 {% block title %}Chi tiết lịch sử quét | Allergy Warning{% endblock %}
+
 {% block content %}
-<div class="content-shell page-section result-page">
-  <a class="back-link" href="{{ url_for('history.scan_history') }}">← Quay lại lịch sử quét</a>
-  {% if database_error %}<section class="inline-alert alert-error">Không tải được chi tiết lịch sử do lỗi cơ sở dữ liệu.</section>
-  {% else %}<section class="page-intro result-intro"><div><span class="eyebrow">CHI TIẾT LẦN QUÉT</span><h1>{{ history.product_name }}</h1><p>{{ history.brand or "Chưa nhận diện thương hiệu" }} · {{ history.scanned_at.strftime('%d/%m/%Y lúc %H:%M') if history.scanned_at else "Không rõ thời gian" }}</p></div><span class="status-pill status-{{ history.warning_status }}">{% if history.warning_status == 'warning' %}Có cảnh báo{% elif history.warning_status == 'clear' %}Chưa thấy trùng khớp{% else %}Chưa đủ dữ liệu{% endif %}</span></section>
-    <section class="result-overview card-panel"><div class="result-photo">{% if history.image_url %}<img src="{{ history.image_url }}" alt="Ảnh {{ history.product_name }}">{% else %}<span>Ảnh không còn khả dụng</span>{% endif %}</div><div class="result-summary"><span class="eyebrow">KẾT QUẢ ĐỐI CHIẾU</span>
-      {% if history.warning_status == 'warning' %}<div class="status-hero status-warning"><span class="status-symbol">!</span><div><h2>Phát hiện thành phần có khả năng liên quan</h2><p>Hãy xem danh sách kết quả được lưu trong lần quét này.</p></div></div>
-      {% elif history.warning_status == 'clear' %}<div class="status-hero status-clear"><span class="status-symbol">✓</span><div><h2>Chưa phát hiện thành phần trùng khớp</h2><p>Đây không phải kết luận rằng sản phẩm an toàn tuyệt đối.</p></div></div>
-      {% else %}<div class="status-hero status-unknown"><span class="status-symbol">!</span><div><h2>Chưa đủ dữ liệu để kết luận</h2><p>Không thể đối chiếu đầy đủ tại thời điểm quét.</p></div></div>{% endif %}
-    </div></section>
-    <div class="result-columns"><section class="card-panel result-data-panel"><div class="section-title-row"><div><span class="eyebrow">ẢNH CHỤP DỮ LIỆU LỊCH SỬ</span><h2>Thành phần</h2></div><span class="count-badge">{{ ingredients|length }}</span></div>{% if ingredients %}<ul class="ingredient-list">{% for item in ingredients %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="muted-copy">Không lưu được danh sách thành phần.</p>{% endif %}</section>
-      <section class="card-panel result-data-panel"><div class="section-title-row"><div><span class="eyebrow">DỮ LIỆU ĐÃ LƯU</span><h2>Dị nguyên</h2></div></div>{% if allergens %}<ul class="tag-list">{% for item in allergens %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="muted-copy">Không có dị nguyên được nhận diện.</p>{% endif %}</section></div>
-    {% if warnings %}<section class="card-panel match-panel"><span class="eyebrow">KẾT QUẢ ĐỐI CHIẾU ĐÃ LƯU</span><h2>Các mục cần chú ý</h2><div class="match-list">{% for item in warnings %}<article class="allergen-item"><strong>{{ item.allergen }}</strong><p>{{ item.warning }}</p>{% if item.ingredients %}<small>Có trong thành phần:</small><ul>{% for ingredient in item.ingredients %}<li>{{ ingredient }}</li>{% endfor %}</ul>{% endif %}</article>{% endfor %}</div></section>{% endif %}
-    <div class="result-actions"><a class="btn btn-primary" href="{{ url_for('scan.scan_page') }}">Quét sản phẩm khác</a><a class="btn btn-secondary" href="{{ url_for('history.scan_history') }}">Tất cả lịch sử</a></div><p class="medical-note">Thông tin lịch sử là bản chụp kết quả tại thời điểm quét. Hãy xác minh với nhãn gốc.</p>
+<style>
+  .hd-page { max-width: 1380px; margin: 0 auto; padding: 38px 24px 72px; }
+  .hd-back { display:inline-flex; align-items:center; gap:8px; color:#238044; font-weight:650; text-decoration:none; margin-bottom:28px; }
+  .hd-back:hover { color:#176333; text-decoration:underline; }
+  .hd-heading { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:26px; }
+  .hd-eyebrow { display:block; color:#238044; font-size:12px; font-weight:800; letter-spacing:1.15px; text-transform:uppercase; margin-bottom:10px; }
+  .hd-heading h1 { color:#172b46; font-size:clamp(27px,3vw,40px); line-height:1.16; font-weight:800; letter-spacing:-.8px; margin:0 0 9px; }
+  .hd-meta { color:#718096; font-size:15px; margin:0; }
+  .hd-pill { display:inline-flex; align-items:center; white-space:nowrap; border-radius:999px; padding:9px 15px; font-size:12px; font-weight:750; background:#fff4dc; color:#9a5700; border:1px solid #f7dfad; }
+  .hd-card { background:#fff; border:1px solid #e6ebef; border-radius:20px; box-shadow:0 10px 30px rgba(24,39,56,.055); }
+  .hd-current { display:grid; grid-template-columns:minmax(300px,.82fr) minmax(0,1.45fr); gap:34px; padding:28px; align-items:center; margin-bottom:24px; }
+  .hd-photo { min-height:340px; max-height:460px; border-radius:18px; overflow:hidden; background:linear-gradient(145deg,#f4f7f4,#edf2ee); border:1px solid #e8eee9; display:flex; align-items:center; justify-content:center; padding:12px; }
+  .hd-photo img { width:100%; height:100%; min-height:310px; max-height:430px; object-fit:contain; display:block; border-radius:10px; }
+  .hd-photo-empty { color:#8995a3; font-size:14px; }
+  .hd-current-content { padding:10px 4px 8px 0; display:flex; flex-direction:column; justify-content:center; }
+  .hd-current-content .hd-eyebrow { margin-bottom:13px; }
+  .hd-status { display:flex; align-items:flex-start; gap:14px; padding:19px 20px; border-radius:15px; border:1px solid; }
+  .hd-status-icon { flex:0 0 34px; width:34px; height:34px; display:grid; place-items:center; border-radius:50%; font-size:19px; font-weight:800; }
+  .hd-status h2 { font-size:19px; line-height:1.35; margin:1px 0 5px; color:#26364a; }
+  .hd-status p { margin:0; color:#64748b; font-size:14px; line-height:1.55; }
+  .hd-warning { background:#fff8e9; border-color:#f5dfb5; }
+  .hd-warning .hd-status-icon { color:#fff; background:#f2a000; }
+  .hd-clear { background:#effaf3; border-color:#ccebd6; }
+  .hd-clear .hd-status-icon { color:#fff; background:#269653; }
+  .hd-unknown { background:#f3f6fa; border-color:#dce4ed; }
+  .hd-unknown .hd-status-icon { color:#fff; background:#8292a5; }
+  .hd-match-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-top:13px; }
+  .hd-match { padding:16px 17px; border:1px solid #f0dfbf; border-radius:13px; background:#fffdf8; }
+  .hd-match strong { display:block; color:#9a3f25; font-size:15px; margin-bottom:6px; }
+  .hd-match p { color:#526174; font-size:13px; line-height:1.5; margin:0 0 8px; }
+  .hd-match small { color:#8290a0; font-size:12px; }
+  .hd-match ul { margin:7px 0 0; padding-left:19px; color:#34465c; font-size:13px; line-height:1.6; }
+  .hd-empty { margin:14px 0 0; padding:16px 18px; border:1px dashed #d9e1e8; border-radius:13px; background:#f8fafb; color:#718096; font-size:13px; line-height:1.6; }
+  .hd-previous { padding:28px; margin-bottom:24px; border-left:4px solid #a7b5c4; background:linear-gradient(180deg,#fff 0%,#fbfcfd 100%); }
+  .hd-previous-head { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:15px; }
+  .hd-previous-head h2 { color:#24364d; font-size:21px; margin:0; }
+  .hd-old-label { color:#66758a; background:#f2f5f8; border:1px solid #e2e8ef; border-radius:999px; padding:8px 13px; font-size:11px; font-weight:750; white-space:nowrap; }
+  .hd-old-status { display:flex; align-items:flex-start; gap:13px; padding:17px 18px; border-radius:13px; }
+  .hd-old-status h3 { font-size:16px; color:#344256; margin:1px 0 4px; }
+  .hd-old-status p { color:#718096; font-size:13px; margin:0; }
+  .hd-old-warning { background:#fff8ed; border:1px solid #f3e2c8; }
+  .hd-old-clear { background:#f2faf5; border:1px solid #d7ecde; }
+  .hd-old-unknown { background:#f5f7fa; border:1px solid #e1e7ee; }
+  .hd-old-symbol { font-size:18px; font-weight:800; }
+  .hd-previous .hd-match-grid { margin-top:12px; }
+  .hd-data-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:20px; margin-bottom:24px; }
+  .hd-data-card { padding:26px 28px; min-width:0; }
+  .hd-data-title { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .hd-data-title h2 { color:#24364d; font-size:20px; margin:0; }
+  .hd-count { display:inline-grid; place-items:center; min-width:31px; height:31px; padding:0 9px; border-radius:999px; color:#247b43; background:#edf7f0; font-size:12px; font-weight:800; }
+  .hd-list { margin:0; padding-left:20px; color:#405168; font-size:14px; line-height:1.9; }
+  .hd-list li::marker { color:#27884a; }
+  .hd-tags { display:flex; flex-wrap:wrap; gap:9px; margin:0; padding:0; list-style:none; }
+  .hd-tags li { background:#eff5f1; border:1px solid #e1ebe4; border-radius:999px; color:#42634e; padding:7px 12px; font-size:13px; }
+  .hd-muted { color:#8793a1; font-size:13px; margin:0; }
+  .hd-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+  .hd-actions a { display:inline-flex; align-items:center; justify-content:center; min-height:43px; padding:0 18px; border-radius:10px; text-decoration:none; font-size:14px; font-weight:700; }
+  .hd-primary { background:#278342; color:#fff; }
+  .hd-primary:hover { background:#1f7138; color:#fff; }
+  .hd-secondary { color:#34465c; border:1px solid #dce3e9; background:#fff; }
+  .hd-secondary:hover { background:#f7f9fb; color:#24364d; }
+  .hd-note { color:#8a96a4; font-size:12px; line-height:1.6; margin:17px 0 0; }
+  .hd-previous > .hd-muted { margin-top:4px; padding:18px 20px; border:1px dashed #d8e0e8; border-radius:14px; background:#f8fafc; line-height:1.65; }
+  @media (max-width: 800px) {
+    .hd-page { padding-top:22px; }
+    .hd-heading { align-items:flex-start; flex-direction:column; gap:13px; }
+    .hd-current { grid-template-columns:1fr; gap:20px; padding:16px; }
+    .hd-photo, .hd-photo img { min-height:220px; max-height:330px; }
+    .hd-current-content { padding:4px 1px; }
+    .hd-data-grid { grid-template-columns:1fr; }
+    .hd-previous { padding:18px; }
+    .hd-previous-head { align-items:flex-start; flex-direction:column; }
+  }
+</style>
+
+<div class="content-shell page-section result-page hd-page">
+  <a class="hd-back" href="{{ url_for('history.scan_history') }}">← Quay lại lịch sử quét</a>
+
+  {% if database_error %}
+    <section class="inline-alert alert-error">Không tải được chi tiết lịch sử do lỗi cơ sở dữ liệu.</section>
+  {% else %}
+    {% set current_status = comparison_status or history.comparison_status or 'unknown' %}
+    <header class="hd-heading">
+      <div>
+        <span class="hd-eyebrow">CHI TIẾT LẦN QUÉT</span>
+        <h1>{{ history.product_name }}</h1>
+        <p class="hd-meta">{{ history.brand or "Chưa nhận diện thương hiệu" }} · {{ history.scanned_at.strftime('%d/%m/%Y lúc %H:%M') if history.scanned_at else "Không rõ thời gian" }}</p>
+      </div>
+      <span class="hd-pill">
+        {% if current_status == 'warning' %}Có dị nguyên trùng hồ sơ
+        {% elif current_status == 'clear' %}Chưa thấy trùng khớp
+        {% elif current_status == 'no_profile' %}Chưa có hồ sơ dị ứng
+        {% else %}Chưa đủ dữ liệu{% endif %}
+      </span>
+    </header>
+
+    <section class="hd-card hd-current">
+      <div class="hd-photo">
+        {% if history.image_url %}<img src="{{ history.image_url }}" alt="Ảnh {{ history.product_name }}">{% else %}<span class="hd-photo-empty">Ảnh không còn khả dụng</span>{% endif %}
+      </div>
+      <div class="hd-current-content">
+        <span class="hd-eyebrow">KẾT QUẢ ĐỐI CHIẾU HIỆN TẠI</span>
+        {% if current_status == 'warning' %}
+          <div class="hd-status hd-warning"><span class="hd-status-icon">!</span><div><h2>Phát hiện dị nguyên trùng hồ sơ</h2><p>Kết quả được tính theo hồ sơ dị ứng hiện tại.</p></div></div>
+        {% elif current_status == 'clear' %}
+          <div class="hd-status hd-clear"><span class="hd-status-icon">✓</span><div><h2>Chưa phát hiện thành phần trùng khớp</h2><p>Điều này không khẳng định sản phẩm an toàn tuyệt đối.</p></div></div>
+        {% elif current_status == 'no_profile' %}
+          <div class="hd-status hd-unknown"><span class="hd-status-icon">i</span><div><h2>Chưa có hồ sơ dị ứng</h2><p>Hãy cập nhật hồ sơ để thực hiện đối chiếu cá nhân.</p></div></div>
+        {% else %}
+          <div class="hd-status hd-unknown"><span class="hd-status-icon">!</span><div><h2>Chưa đủ dữ liệu để kết luận</h2><p>Không thể đối chiếu đầy đủ với hồ sơ hiện tại.</p></div></div>
+        {% endif %}
+
+        {% if warnings %}
+          <div class="hd-match-grid">
+            {% for item in warnings %}
+              <article class="hd-match"><strong>{{ item.allergen }}</strong><p>{{ item.warning }}</p>
+                {% if item.ingredients %}<small>Có trong thành phần:</small><ul>{% for ingredient in item.ingredients %}<li>{{ ingredient }}</li>{% endfor %}</ul>{% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="hd-empty">Không có dị nguyên nào trùng với hồ sơ hiện tại được lưu.</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="hd-card hd-previous">
+      <div class="hd-previous-head">
+        <div><span class="hd-eyebrow">LỊCH SỬ THAY ĐỔI HỒ SƠ</span><h2>Kết quả đối chiếu trước đây</h2></div>
+        <span class="hd-old-label">Trước lần thay đổi hồ sơ gần nhất</span>
+      </div>
+      {% if previous_comparison_status %}
+        {% if previous_comparison_status == 'warning' %}
+          <div class="hd-old-status hd-old-warning"><span class="hd-old-symbol">!</span><div><h3>Phát hiện dị nguyên trùng hồ sơ cũ</h3><p>Kết quả được lưu trước khi hồ sơ dị ứng thay đổi.</p></div></div>
+        {% elif previous_comparison_status == 'clear' %}
+          <div class="hd-old-status hd-old-clear"><span class="hd-old-symbol">✓</span><div><h3>Chưa phát hiện thành phần trùng khớp</h3><p>Đây là kết quả của lần đối chiếu trước.</p></div></div>
+        {% elif previous_comparison_status == 'no_profile' %}
+          <div class="hd-old-status hd-old-unknown"><span class="hd-old-symbol">i</span><div><h3>Chưa có hồ sơ dị ứng ở lần đối chiếu trước</h3></div></div>
+        {% else %}
+          <div class="hd-old-status hd-old-unknown"><span class="hd-old-symbol">!</span><div><h3>Chưa đủ dữ liệu ở lần đối chiếu trước</h3></div></div>
+        {% endif %}
+        {% if previous_warnings %}
+          <div class="hd-match-grid">
+            {% for item in previous_warnings %}
+              <article class="hd-match"><strong>{{ item.allergen }}</strong><p>{{ item.warning }}</p>
+                {% if item.ingredients %}<small>Có trong thành phần:</small><ul>{% for ingredient in item.ingredients %}<li>{{ ingredient }}</li>{% endfor %}</ul>{% endif %}
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="hd-empty">Không có dị nguyên trùng hồ sơ trong kết quả đối chiếu trước đây.</p>
+        {% endif %}
+      {% else %}
+        <p class="hd-muted">Chưa có bản lưu kết quả đối chiếu cũ. Kết quả cũ sẽ được lưu từ lần thay đổi hồ sơ tiếp theo.</p>
+      {% endif %}
+    </section>
+
+    <div class="hd-data-grid">
+      <section class="hd-card hd-data-card">
+        <div class="hd-data-title"><div><span class="hd-eyebrow">ẢNH CHỤP DỮ LIỆU LỊCH SỬ</span><h2>Thành phần</h2></div><span class="hd-count">{{ ingredients|length }}</span></div>
+        {% if ingredients %}<ul class="hd-list">{% for item in ingredients %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="hd-muted">Không lưu được danh sách thành phần.</p>{% endif %}
+      </section>
+      <section class="hd-card hd-data-card">
+        <div class="hd-data-title"><div><span class="hd-eyebrow">NHẬN DIỆN TỪ SẢN PHẨM</span><h2>Dị nguyên</h2></div></div>
+        {% if allergens %}<ul class="hd-tags">{% for item in allergens %}<li>{{ item }}</li>{% endfor %}</ul>{% else %}<p class="hd-muted">Không có dị nguyên được nhận diện.</p>{% endif %}
+      </section>
+    </div>
+
+    <div class="hd-actions"><a class="hd-primary" href="{{ url_for('scan.scan_page') }}">Quét sản phẩm khác</a><a class="hd-secondary" href="{{ url_for('history.scan_history') }}">Tất cả lịch sử</a></div>
+    <p class="hd-note">Kết quả đối chiếu hiện tại được tính theo hồ sơ dị ứng mới nhất. Dị nguyên, thành phần gốc, hình ảnh và thời gian quét của sản phẩm không bị thay đổi.</p>
   {% endif %}
 </div>
 {% endblock %}

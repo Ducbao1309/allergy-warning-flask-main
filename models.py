@@ -342,6 +342,13 @@ class ScanHistory(db.Model):
     ingredients_json = db.Column(db.Text, nullable=False)
     allergens_json = db.Column(db.Text, nullable=False)
     warnings_json = db.Column(db.Text, nullable=False)
+    # Lưu riêng cảnh báo "có thể chứa" để có thể đối chiếu lại khi hồ sơ đổi.
+    may_contain_json = db.Column(db.Text, nullable=True, default="[]")
+    # Trạng thái đối chiếu với hồ sơ cá nhân, tách khỏi trạng thái phân tích sản phẩm.
+    comparison_status = db.Column(db.String(20), nullable=True, index=True)
+    # Snapshot kết quả đối chiếu trước lần thay đổi hồ sơ gần nhất.
+    previous_warnings_json = db.Column(db.Text, nullable=True)
+    previous_comparison_status = db.Column(db.String(20), nullable=True)
     warning_status = db.Column(db.String(20), nullable=False, index=True)
     scanned_at = db.Column(
         db.DateTime,

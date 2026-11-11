@@ -302,57 +302,88 @@ def detect_ingredient_context(text):
 
 def find_product_by_identity(name, brand=None, barcode=None):
     """
-    Tìm sản phẩm dựa trên barcode hoặc
-    tên + brand.
+    Tìm sản phẩm trong danh mục.
 
-    Không fuzzy match tên ở đây để tránh
-    nhận nhầm sản phẩm.
+    Ưu tiên:
+    1. Barcode nếu có.
+    2. Tên + brand khớp chính xác.
+    3. Tên khớp chính xác và chỉ có duy nhất một sản phẩm mang tên đó
+       (fallback khi Gemini đọc brand khác dữ liệu crawler).
+    4. Tên gần giống ở mức rất cao và chỉ có một ứng viên phù hợp.
+
+    Không lấy một sản phẩm chỉ vì brand giống nhau.
     """
 
     products = Product.query.all()
 
-    # =====================================================
-    # ƯU TIÊN BARCODE
-    # =====================================================
-
-    if barcode and re.fullmatch(
-        r"\d{8,14}",
-        str(barcode).strip()
-    ):
-
-        barcode_value = str(barcode).strip()
-
-        barcode_match = next(
-            (
-                item
-                for item in products
-                if item.barcode == barcode_value
-            ),
-            None
-        )
-
-        if barcode_match:
-            return barcode_match
-
-    # =====================================================
-    # TÊN + BRAND
-    # =====================================================
-
     normalized_name = normalize_text(name)
     normalized_brand = normalize_text(brand)
 
-    if not normalized_name or not normalized_brand:
+    if not normalized_name:
         return None
 
-    return next(
-        (
-            item
-            for item in products
-            if normalize_text(item.name) == normalized_name
-            and normalize_text(item.brand) == normalized_brand
-        ),
-        None
-    )
+    # 1. Barcode
+    if barcode and re.fullmatch(r"\d{8,14}", str(barcode).strip()):
+        barcode_value = str(barcode).strip()
+        barcode_match = next(
+            (item for item in products if str(item.barcode or "").strip() == barcode_value),
+            None,
+        )
+        if barcode_match:
+            return barcode_match
+
+    # 2. Tên + brand chính xác
+    exact_name_matches = [
+        item for item in products
+        if normalize_text(item.name) == normalized_name
+    ]
+
+    if normalized_brand:
+        exact_brand_match = next(
+            (
+                item for item in exact_name_matches
+                if normalize_text(item.brand) == normalized_brand
+            ),
+            None,
+        )
+        if exact_brand_match:
+            return exact_brand_match
+
+    # 3. Tên chính xác nhưng brand không khớp/không được Gemini đọc đúng.
+    # Chỉ fallback nếu tên này duy nhất trong catalog để tránh nhận nhầm.
+    if len(exact_name_matches) == 1:
+        return exact_name_matches[0]
+
+    # 4. Fuzzy match rất chặt, chỉ chấp nhận duy nhất một ứng viên.
+    fuzzy_matches = []
+    for item in products:
+        candidate_name = normalize_text(item.name)
+        if not candidate_name:
+            continue
+
+        score = SequenceMatcher(None, normalized_name, candidate_name).ratio()
+        contained = (
+            len(normalized_name) >= 8
+            and (
+                normalized_name in candidate_name
+                or candidate_name in normalized_name
+            )
+        )
+
+        if score >= 0.92 or contained:
+            fuzzy_matches.append((score, item))
+
+    if fuzzy_matches:
+        fuzzy_matches.sort(key=lambda pair: pair[0], reverse=True)
+        best_score, best_product = fuzzy_matches[0]
+
+        # Nếu hai ứng viên gần ngang nhau thì không tự đoán.
+        if len(fuzzy_matches) == 1 or (
+            best_score - fuzzy_matches[1][0] >= 0.08
+        ):
+            return best_product
+
+    return None
 
 
 # =========================================================
@@ -835,8 +866,13 @@ ALLERGEN_DEFINITIONS = {
             "weizenmehl",
             "flour",
             "gluten",
+            # Tên nguyên liệu tiếng Việt
+            "bot mi",
+            "lua mi",
+            "bot lua mi",
+            "bot mi wheat",
 
-            # Lúa mạch
+            # Lúa mạch / malt đại mạch
             "barley",
             "barley flour",
             "barley malt",
@@ -845,6 +881,13 @@ ALLERGEN_DEFINITIONS = {
             "gersten",
             "gerstenmehl",
             "gerstenmalz",
+            "gerstenmalzextrakt",
+            "malzextrakt",
+            "malz",
+            "dai mach",
+            "malt dai mach",
+            "mach nha dai mach",
+            "malt dai mach nguyen chat",
         ],
     ),
 
@@ -1123,6 +1166,10 @@ ALLERGEN_HIERARCHY = {
         "weizenmehl",
         "flour",
         "gluten",
+        "bot mi",
+        "lua mi",
+        "bot lua mi",
+        "bot mi wheat",
         "barley",
         "barley flour",
         "barley malt",
@@ -1131,6 +1178,13 @@ ALLERGEN_HIERARCHY = {
         "gersten",
         "gerstenmehl",
         "gerstenmalz",
+        "gerstenmalzextrakt",
+        "malzextrakt",
+        "malz",
+        "dai mach",
+        "malt dai mach",
+        "mach nha dai mach",
+        "malt dai mach nguyen chat",
     },
 
     # =====================================================
@@ -1257,7 +1311,6 @@ ALLERGEN_NAME_ALIASES.update({
     "vung": "SESAME",
     "sulfit": "SULPHITES",
     # Vietnamese names and ingredient phrases for existing canonical groups.
-    "ca": "FISH",
     "ca trich": "FISH",
     "ca hoi": "FISH",
     "ca ngu": "FISH",
@@ -1325,6 +1378,11 @@ def resolve_allergen_tag(value):
     if not normalized_value:
         return None
 
+    # "cá" (fish) and "cà" (tomato) both normalize to "ca".
+    # Preserve the distinction for the bare Vietnamese term.
+    if normalized_value == "ca":
+        return "FISH" if raw_value == "cá" else None
+
     canonical = ALLERGEN_NAME_ALIASES.get(normalized_value)
     if canonical:
         return canonical
@@ -1332,6 +1390,8 @@ def resolve_allergen_tag(value):
     # Allergen labels may include preparation details, e.g. "soybean oil".
     # Resolve a known alias embedded as a complete phrase, never as a substring.
     for alias in sorted(ALLERGEN_NAME_ALIASES, key=len, reverse=True):
+        if alias == "ca":
+            continue
         if alias and re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", normalized_value):
             return ALLERGEN_NAME_ALIASES[alias]
     return None
@@ -1373,37 +1433,35 @@ def has_unsupported_allergen_tags(tags):
 
 
 def should_mark_allergen_result_unknown(
-    user_allergen_tags,
+    user_allergen_tags=None,
     product_ingredients=None,
     product_allergen_tags=None,
     gemini_allergens=None,
     may_contain_allergens=None,
     matches=None,
 ):
-    """Decide whether missing or unsupported evidence prevents a result."""
-    user_values = _as_allergen_values(user_allergen_tags)
-    if not any(value is not None and str(value).strip() for value in user_values):
-        return True
-
-    if matches:
-        return False
+    """
+    Chỉ trả về True khi không có dữ liệu sản phẩm để phân tích.
+    Dị nguyên chưa chuẩn hóa không được làm mất kết quả phân tích
+    nếu nhãn vẫn có thành phần hoặc cảnh báo để hệ thống đọc.
+    Hồ sơ dị ứng trống được xử lý riêng ở giao diện.
+    """
+    product_values = (
+        product_ingredients,
+        product_allergen_tags,
+        gemini_allergens,
+        may_contain_allergens,
+    )
 
     has_product_data = any(
-        any(value is not None and str(value).strip() for value in _as_allergen_values(values))
-        for values in (
-            product_ingredients,
-            product_allergen_tags,
-            gemini_allergens,
-            may_contain_allergens,
+        any(
+            value is not None and str(value).strip()
+            for value in _as_allergen_values(values)
         )
+        for values in product_values
     )
-    if not has_product_data:
-        return True
 
-    return any(
-        has_unsupported_allergen_tags(values)
-        for values in (user_allergen_tags, product_allergen_tags, gemini_allergens, may_contain_allergens)
-    )
+    return not has_product_data
 
 
 def get_allergen_keywords(tag):
@@ -1484,6 +1542,15 @@ def ingredient_matches_allergen(
         if re.search(r"(?<!\w)(?:m\u00e8|v\u1eebng)(?!\w)", raw_ingredient):
             return True
 
+    # Check original Vietnamese spelling before accent removal:
+    # "cá" is fish, while "cà" in "cà chua" is tomato.
+    if canonical_tag == "FISH":
+        raw_ingredient = unicodedata.normalize(
+            "NFKC", str(ingredient)
+        ).casefold()
+        if re.search(r"(?<!\w)cá(?!\w)", raw_ingredient):
+            return True
+
     keywords = get_allergen_keywords(
         allergen_tag
     )
@@ -1498,7 +1565,15 @@ def ingredient_matches_allergen(
     for alias in aliases:
         if not alias:
             continue
-        if re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", ingredient_normalized):
+
+        # Do not match the ambiguous normalized alias "ca" for fish.
+        if canonical_tag == "FISH" and alias == "ca":
+            continue
+
+        if re.search(
+            r"(?<!\\w)" + re.escape(alias) + r"(?!\\w)",
+            ingredient_normalized
+        ):
             return True
 
     for keyword in keywords:
@@ -1508,6 +1583,11 @@ def ingredient_matches_allergen(
         )
 
         if not keyword_normalized:
+            continue
+
+        # "cá" and "cà" both normalize to "ca" after accent removal.
+        # Do not use this ambiguous bare keyword for FISH detection.
+        if canonical_tag == "FISH" and keyword_normalized == "ca":
             continue
 
         # =================================================

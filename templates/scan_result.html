@@ -116,23 +116,20 @@ Kết quả phân tích | Allergy Warning
 
                         <h2>
                             {% if contains_results %}
-                                Cần chú ý: Sản phẩm có chứa {{ contains_results[0].allergen }}
-                                {% if contains_results[0].ingredients %}
-                                    (từ {{ contains_results[0].ingredients[0] }})
-                                {% endif %}
+                                Sản phẩm có dị nguyên trùng với hồ sơ dị ứng
                             {% else %}
-                                Cần chú ý: Có cảnh báo liên quan đến hồ sơ dị ứng
+                                Sản phẩm có cảnh báo liên quan đến hồ sơ dị ứng
                             {% endif %}
                         </h2>
                         <p>
                             {% if contains_results %}
-                                Thành phần này trùng với dị ứng bạn đã khai báo.
-                                Bạn nên tránh sử dụng sản phẩm nếu đã được xác nhận
-                                dị ứng với chất trên.
+                                Hệ thống phát hiện thành phần liên quan đến dị nguyên
+                                bạn đã khai báo trong hồ sơ.
                             {% else %}
-                                Nhãn có cảnh báo có thể chứa chất liên quan đến hồ sơ
-                                dị ứng của bạn. Hãy kiểm tra phần cảnh báo bên dưới.
+                                Nhãn sản phẩm có cảnh báo về khả năng chứa dị nguyên
+                                liên quan đến hồ sơ của bạn.
                             {% endif %}
+                            Xem chi tiết các thành phần được đối chiếu bên dưới.
                         </p>
 
                     </div>
@@ -151,14 +148,12 @@ Kết quả phân tích | Allergy Warning
                     <div>
 
                         <h2>
-                            Chưa tìm thấy chất trùng với hồ sơ dị ứng
+                            Chưa phát hiện dị nguyên trùng với hồ sơ
                         </h2>
 
                         <p>
-                            Điều này chỉ có nghĩa là hệ thống chưa tìm
-                            thấy chất trùng với hồ sơ của bạn trong dữ liệu
-                            đã đọc được; không có nghĩa sản phẩm chắc chắn
-                            an toàn hoặc không chứa dị nguyên.
+                            Trong thông tin đọc được từ nhãn, hệ thống chưa tìm thấy
+                            dị nguyên trùng với hồ sơ dị ứng của bạn.
                         </p>
 
                     </div>
@@ -167,6 +162,14 @@ Kết quả phân tích | Allergy Warning
 
             {% endif %}
 
+
+            {% if ambiguous_ingredient_terms %}
+                <p class="muted-copy" style="margin-top: 10px;">
+                    Lưu ý: Nhãn có cụm từ chung chung như
+                    {{ ambiguous_ingredient_terms|join(", ") }} nên cần kiểm tra thêm
+                    thông tin chi tiết trên bao bì.
+                </p>
+            {% endif %}
 
             {% if product %}
 
@@ -186,6 +189,96 @@ Kết quả phân tích | Allergy Warning
         </div>
 
     </section>
+
+
+    <!-- =====================================================
+         THÀNH PHẦN TRÙNG VỚI HỒ SƠ DỊ ỨNG
+    ====================================================== -->
+
+    {% set matched_detected_allergens = [] %}
+
+    {% for item in detected_allergens %}
+        {% set matched_personal = namespace(found=false) %}
+
+        {% for personal_item in contains_results %}
+            {% if personal_item.tag == item.tag or personal_item.allergen == item.label %}
+                {% set matched_personal.found = true %}
+            {% endif %}
+        {% endfor %}
+
+        {% if matched_personal.found %}
+            {% set _ = matched_detected_allergens.append(item) %}
+        {% endif %}
+    {% endfor %}
+
+    {% if matched_detected_allergens or match_unknown or allergens %}
+    <section class="card-panel match-panel" style="margin-top: 24px; padding: 24px;">
+        <span class="eyebrow">ĐỐI CHIẾU VỚI HỒ SƠ DỊ ỨNG</span>
+        <h2>Thành phần trùng với hồ sơ dị ứng của bạn</h2>
+
+        {% if has_allergy_profile %}
+            <p class="muted-copy">
+                Các dị nguyên được hệ thống nhận diện trong thành phần và đối chiếu
+                với hồ sơ dị ứng bạn đã khai báo.
+            </p>
+        {% else %}
+            <p class="muted-copy">
+                Bạn chưa thiết lập hồ sơ dị ứng. Hãy cập nhật hồ sơ để hệ thống
+                có thể đối chiếu dị nguyên với tình trạng dị ứng của bạn.
+            </p>
+        {% endif %}
+
+        {% if matched_detected_allergens %}
+            <div class="match-list">
+                {% for item in matched_detected_allergens %}
+                    <article class="allergen-item">
+                        <strong>{{ item.label or item.tag }}</strong>
+
+                        {% if item.ingredients %}
+                            <p>
+                                Được nhận diện từ:
+                                {% for ingredient in item.ingredients %}
+                                    <strong>{{ ingredient }}</strong>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </p>
+                        {% endif %}
+
+                        <p class="inline-alert alert-warning" style="margin-top: 12px; padding: 12px;">
+                            <strong>Trùng với hồ sơ dị ứng của bạn.</strong>
+                            Không nên sử dụng sản phẩm nếu bạn đã được xác nhận dị ứng với chất này.
+                        </p>
+                    </article>
+                {% endfor %}
+            </div>
+        {% elif match_unknown %}
+            <div class="status-hero status-unknown" style="margin-top: 16px;">
+                <span class="status-symbol">!</span>
+                <div>
+                    <h3>Chưa đủ dữ liệu để kết luận</h3>
+                    <p>Sản phẩm chưa có trong danh mục đã thu thập. Dữ liệu đọc từ ảnh chưa đủ để xác nhận không có dị nguyên trùng khớp. Vui lòng kiểm tra kỹ bao bì.</p>
+                </div>
+            </div>
+        {% elif allergens %}
+            <div class="match-list" style="margin-top: 16px;">
+                {% for item in allergens %}
+                    <article class="allergen-item">
+                        <strong>{{ item.allergen }}</strong>
+                        {% if item.status == "may_contain" %}
+                            <p class="inline-alert alert-warning">Có thể chứa vết dị nguyên này.</p>
+                        {% else %}
+                            <p class="inline-alert alert-warning">Phát hiện thành phần trùng với hồ sơ dị ứng.</p>
+                        {% endif %}
+                        {% if item.ingredients %}
+                            <p>Nguồn nhận diện: {{ item.ingredients|join(", ") }}</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </section>
+    {% endif %}
+
+
 
 
     <!-- =====================================================
@@ -246,7 +339,7 @@ Kết quả phân tích | Allergy Warning
                     </span>
 
                     <h2>
-                        Dị nguyên được nhà sản xuất cảnh báo
+                        Dị nguyên được nhận diện từ nhãn sản phẩm 
                     </h2>
 
                 </div>
@@ -316,67 +409,6 @@ Kết quả phân tích | Allergy Warning
         </section>
 
     </div>
-
-
-    <!-- =====================================================
-         THÀNH PHẦN TRÙNG VỚI HỒ SƠ DỊ ỨNG
-    ====================================================== -->
-
-    {% set matched_detected_allergens = [] %}
-
-    {% for item in detected_allergens %}
-        {% set matched_personal = namespace(found=false) %}
-
-        {% for personal_item in contains_results %}
-            {% if personal_item.tag == item.tag or personal_item.allergen == item.label %}
-                {% set matched_personal.found = true %}
-            {% endif %}
-        {% endfor %}
-
-        {% if matched_personal.found %}
-            {% set _ = matched_detected_allergens.append(item) %}
-        {% endif %}
-    {% endfor %}
-
-    <section class="card-panel match-panel" style="margin-top: 24px; padding: 24px;">
-        <span class="eyebrow">KẾT QUẢ KIỂM TRA THÀNH PHẦN</span>
-        <h2>Thành phần trùng với hồ sơ dị ứng của bạn</h2>
-
-        <p class="muted-copy">
-            Chỉ hiển thị những chất được nhận diện trong danh sách thành phần
-            và đồng thời trùng với hồ sơ dị ứng bạn đã khai báo.
-        </p>
-
-        {% if matched_detected_allergens %}
-            <div class="match-list">
-                {% for item in matched_detected_allergens %}
-                    <article class="allergen-item">
-                        <strong>{{ item.label or item.tag }}</strong>
-
-                        {% if item.ingredients %}
-                            <p>
-                                Được nhận diện từ:
-                                {% for ingredient in item.ingredients %}
-                                    <strong>{{ ingredient }}</strong>{% if not loop.last %}, {% endif %}
-                                {% endfor %}
-                            </p>
-                        {% endif %}
-
-                        <p class="inline-alert alert-warning" style="margin-top: 12px; padding: 12px;">
-                            <strong>Trùng với hồ sơ dị ứng của bạn.</strong>
-                            Không nên sử dụng sản phẩm nếu bạn đã được xác nhận dị ứng với chất này.
-                        </p>
-                    </article>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p class="muted-copy">
-                Không tìm thấy thành phần nào vừa được nhận diện là dị nguyên
-                vừa trùng với hồ sơ dị ứng hiện tại của bạn.
-                Điều này không đảm bảo sản phẩm không chứa chất gây dị ứng.
-            </p>
-        {% endif %}
-    </section>
 
 
     <!-- =====================================================
@@ -456,35 +488,6 @@ Kết quả phân tích | Allergy Warning
 
 
     <!-- =====================================================
-         KHÔNG CÓ DỊ NGUYÊN
-    ====================================================== -->
-
-    {% if not allergens and not match_unknown %}
-
-        <section class="card-panel match-panel">
-
-            <span class="eyebrow">
-                KẾT QUẢ ĐỐI CHIẾU
-            </span>
-
-            <h2>
-                ✓ Chưa phát hiện dị nguyên trùng khớp
-            </h2>
-
-            <p>
-                Chưa phát hiện dị nguyên trong sản phẩm trùng với
-                hồ sơ dị ứng hiện tại. Hãy xem riêng mục
-                “Dị nguyên phát hiện từ thành phần” để biết các dị nguyên
-                được nhận diện trong sản phẩm, kể cả khi bạn không khai
-                báo dị ứng với chúng.
-            </p>
-
-        </section>
-
-    {% endif %}
-
-
-    <!-- =====================================================
          NỘI DUNG PHÂN TÍCH
     ====================================================== -->
 
@@ -507,54 +510,6 @@ Kết quả phân tích | Allergy Warning
         <h3>Nội dung hệ thống đọc được từ ảnh</h3>
         <div class="ocr-text">{{ text }}</div>
     </details>
-
-
-    <!-- =====================================================
-         SAVE PRODUCT
-    ====================================================== -->
-
-    {% if save_token %}
-
-        <section class="save-product-panel">
-
-            <div>
-
-                <strong>
-                    Chưa có sản phẩm này trong danh mục
-                </strong>
-
-                <span>
-                    Bạn có thể lưu sản phẩm để dùng lại
-                    dữ liệu đã nhận diện.
-                </span>
-
-            </div>
-
-
-            <form
-                method="post"
-                action="{{ url_for('scan.save_scan_product') }}"
-            >
-
-                <input
-                    type="hidden"
-                    name="save_token"
-                    value="{{ save_token }}"
-                >
-
-                <button
-                    type="submit"
-                    class="btn btn-secondary"
-                >
-                    Lưu sản phẩm
-                </button>
-
-            </form>
-
-        </section>
-
-    {% endif %}
-
 
 
     <!-- =====================================================

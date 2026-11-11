@@ -2,6 +2,7 @@ import os
 import uuid
 import logging
 import inspect
+import re
 from services.cloudinary_service import upload_scan_image
 
 from services.product_service import (
@@ -33,6 +34,7 @@ from flask import (
 )
 
 from werkzeug.exceptions import RequestEntityTooLarge
+from sqlalchemy import text as sql_text
 from sqlalchemy.exc import SQLAlchemyError
 
 from extensions import db
@@ -42,16 +44,6 @@ from services.gemini_service import (
     GeminiServiceError,
     InvalidProductImageError,
     analyze_product_image,
-)
-
-from services.product_service import (
-    find_product_by_identity,
-    save_scanned_product,
-    get_product_ingredients,
-    get_product_allergens,
-    check_product_ingredients,
-    should_mark_allergen_result_unknown,
-    normalize_and_deduplicate_ingredients,
 )
 
 from models import UserAllergen, ScanHistory
@@ -515,6 +507,21 @@ def process_scan():
         label_data.get("brand", "")
     )
 
+    # Gemini đã hỗ trợ đọc barcode trong gemini_service.py.
+    # Chuẩn hóa chỉ giữ chữ số để đối chiếu với dữ liệu trong database.
+    barcode_from_gemini = re.sub(
+        r"\D",
+        "",
+        str(label_data.get("barcode") or ""),
+    )
+
+    current_app.logger.info(
+        "[SCAN] Gemini identification: name=%s, brand=%s, barcode=%s",
+        product_name_from_gemini,
+        brand_from_gemini,
+        barcode_from_gemini or None,
+    )
+
     gemini_ingredients = (
         label_data.get("ingredients", [])
     )
@@ -590,19 +597,40 @@ def process_scan():
             "[SCAN STAGE 9] product lookup started"
         )
 
-        if (
-            product_name_from_gemini
-            and brand_from_gemini
-        ):
+        # Kiểm tra database mà Flask đang dùng và truy vấn barcode trực tiếp.
+        # Chỉ đọc dữ liệu, không thay đổi database.
+        db_info = db.session.execute(
+            sql_text("SELECT DATABASE() AS db_name")
+        ).mappings().first()
+        current_app.logger.info(
+            "[DB CHECK] Connected database: %s",
+            db_info["db_name"] if db_info else None,
+        )
 
-            product = find_product_by_identity(
-                product_name_from_gemini,
-                brand_from_gemini,
-            )
+        barcode_row = None
+        if barcode_from_gemini:
+            barcode_row = db.session.execute(
+                sql_text("""
+                    SELECT id, name, brand, barcode
+                    FROM products
+                    WHERE barcode = :barcode
+                    LIMIT 1
+                """),
+                {"barcode": barcode_from_gemini},
+            ).mappings().first()
+        current_app.logger.info(
+            "[DB CHECK] Direct barcode query result: %s",
+            dict(barcode_row) if barcode_row else None,
+        )
 
-        else:
-
-            product = None
+        # Ưu tiên barcode vì đây là định danh chính xác hơn tên sản phẩm.
+        # Nếu không có barcode hoặc không tìm thấy theo barcode,
+        # product_service sẽ tiếp tục đối chiếu tên + thương hiệu.
+        product = find_product_by_identity(
+            product_name_from_gemini or "",
+            brand_from_gemini or None,
+            barcode_from_gemini or None,
+        )
 
     except SQLAlchemyError as error:
 
@@ -616,6 +644,13 @@ def process_scan():
 
     current_app.logger.info(
         "[SCAN STAGE 10] product lookup finished"
+    )
+    
+    current_app.logger.info(
+    "[SCAN DEBUG] product_found=%s product_id=%s product_name=%s",
+    product is not None,
+    getattr(product, "id", None),
+    getattr(product, "name", None),
     )
 
     # =====================================================
@@ -708,14 +743,11 @@ def process_scan():
         user_allergens = []
 
     user_allergen_tags = {
-
         item.allergen.off_tag
-
         for item in user_allergens
-
-        if item.allergen
-        and item.allergen.off_tag
+        if item.allergen and item.allergen.off_tag
     }
+    has_allergy_profile = bool(user_allergen_tags)
 
     # =====================================================
     # 12. SO SÁNH DỊ NGUYÊN
@@ -760,14 +792,40 @@ def process_scan():
     # 13. UNKNOWN
     # =====================================================
 
-    match_unknown = should_mark_allergen_result_unknown(
-        user_allergen_tags=user_allergen_tags,
-        product_ingredients=product_ingredients,
-        product_allergen_tags=product_allergens,
-        gemini_allergens=gemini_allergens,
-        may_contain_allergens=gemini_may_contain_allergens,
-        matches=allergens,
-    )
+    # Trạng thái đối chiếu phải xét đồng thời nguồn dữ liệu và kết quả match.
+    # Sản phẩm trong danh mục được xem là có dữ liệu thành phần đầy đủ.
+    # Sản phẩm ngoài danh mục chỉ có dữ liệu Gemini trích xuất từ ảnh.
+    has_catalog_product = product is not None
+    contains_matches = [
+        item for item in allergens
+        if item.get("status") == "contains"
+    ]
+    may_contain_matches = [
+        item for item in allergens
+        if item.get("status") == "may_contain"
+    ]
+
+    if not has_allergy_profile:
+        match_unknown = True
+    elif contains_matches or may_contain_matches:
+        # Không được để trạng thái unknown che mất cảnh báo từ ảnh.
+        match_unknown = False
+    elif has_catalog_product:
+        # Có trong danh mục và danh mục có dữ liệu đầy đủ: không match => clear.
+        match_unknown = False
+    else:
+        # Ngoài danh mục, không match từ ảnh không đủ cơ sở kết luận.
+        match_unknown = True
+
+    # Các cụm từ chung chung không xác định được dị nguyên cụ thể.
+    ambiguous_ingredient_terms = [
+        ingredient for ingredient in product_ingredients
+        if re.search(
+            r"(?i)\\b(?:ng[uũ]\s*c[oố]c|cereal(?:s)?|grain(?:s)?|"
+            r"h[uư][oơ]ng\s*li[eệ]u|flavou?r(?:ing)?s?)\\b",
+            str(ingredient),
+        )
+    ]
 
     current_app.logger.info(
         "[SCAN STAGE 12] allergy matching finished"
@@ -778,11 +836,20 @@ def process_scan():
     # =====================================================
 
     
+    # Trạng thái tổng quan dựa trên dị nguyên nhận diện từ sản phẩm,
+    # không phụ thuộc người dùng đã khai báo hồ sơ dị ứng hay chưa.
+    has_detected_product_allergen = bool(
+        detected_allergens
+        or gemini_allergens
+        or product_allergens
+        or gemini_may_contain_allergens
+    )
+
     warning_status = (
         "unknown"
         if match_unknown
         else "warning"
-        if allergens
+        if has_detected_product_allergen
         else "clear"
     )
 
@@ -863,6 +930,18 @@ def process_scan():
                 warnings=allergens,
 
                 warning_status=warning_status,
+
+                may_contain_allergens=gemini_may_contain_allergens,
+
+                comparison_status=(
+                    "no_profile"
+                    if not has_allergy_profile
+                    else "unknown"
+                    if match_unknown
+                    else "warning"
+                    if allergens
+                    else "clear"
+                ),
             )
         )
 
@@ -897,6 +976,9 @@ def process_scan():
 
                     "brand":
                         brand_from_gemini,
+
+                    "barcode":
+                        barcode_from_gemini,
 
                     "ingredients":
                         gemini_ingredients,
@@ -949,8 +1031,12 @@ def process_scan():
         gemini_may_contain_allergens=
             gemini_may_contain_allergens,
 
-        match_unknown=
-            match_unknown,
+        match_unknown=match_unknown,
+
+        has_allergy_profile=has_allergy_profile,
+        has_detected_product_allergen=has_detected_product_allergen,
+        has_catalog_product=has_catalog_product,
+        ambiguous_ingredient_terms=ambiguous_ingredient_terms,
 
         product_ingredients=
             product_ingredients,

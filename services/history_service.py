@@ -18,6 +18,8 @@ def save_scan_history(
     allergens,
     warnings,
     warning_status,
+    may_contain_allergens=None,
+    comparison_status=None,
 ):
     """Save one immutable scan snapshot, returning an existing duplicate token."""
     try:
@@ -41,6 +43,11 @@ def save_scan_history(
             ingredients_json=json.dumps(ingredients or [], ensure_ascii=False),
             allergens_json=json.dumps(allergens or [], ensure_ascii=False),
             warnings_json=json.dumps(warnings or [], ensure_ascii=False),
+            may_contain_json=json.dumps(
+                may_contain_allergens or [],
+                ensure_ascii=False,
+            ),
+            comparison_status=comparison_status,
             warning_status=warning_status,
         )
         db.session.add(history)
