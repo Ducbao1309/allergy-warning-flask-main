@@ -4,6 +4,9 @@ from flask import Flask
 from config import Config
 from extensions import db
 
+from datetime import timezone
+from zoneinfo import ZoneInfo
+
 from routes.product import product_bp
 from routes.main import main_bp
 from routes.auth import auth_bp
@@ -18,6 +21,18 @@ from routes.admin import admin_bp
 # =========================================================
 
 app = Flask(__name__)
+
+@app.template_filter("vn_datetime")
+def vn_datetime(value):
+    if not value:
+        return ""
+
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+
+    value = value.astimezone(ZoneInfo("Asia/Ho_Chi_Minh"))
+
+    return value.strftime("%d/%m/%Y %H:%M")
 
 app.config.from_object(Config)
 

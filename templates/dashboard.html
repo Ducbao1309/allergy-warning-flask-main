@@ -16,8 +16,20 @@
       {% for item in recent_history %}<a class="recent-item" href="{{ url_for('history.scan_history_detail', history_id=item.id) }}">
         <div class="recent-thumb">{% if item.image_url %}<img src="{{ item.image_url }}" alt="Ảnh {{ item.product_name }}">{% else %}<span>▧</span>{% endif %}</div>
         <div class="recent-copy"><strong>{{ item.product_name }}</strong><span>{{ item.brand or "Chưa nhận diện thương hiệu" }}</span></div>
-        <span class="status-pill status-{{ item.warning_status }}">{% if item.warning_status == 'warning' %}Có cảnh báo{% elif item.warning_status == 'clear' %}Chưa thấy trùng khớp{% else %}Chưa đủ dữ liệu{% endif %}</span>
-        <time>{{ item.scanned_at.strftime('%d/%m/%Y %H:%M') if item.scanned_at else '' }}</time>
+        {% set item_status = recent_statuses.get(item.id, 'unknown') %}
+
+        <span class="status-pill status-{{ item_status }}">
+          {% if item_status == 'warning' %}
+              Có cảnh báo
+          {% elif item_status == 'clear' %}
+              Chưa thấy trùng khớp
+          {% elif item_status == 'no_profile' %}
+              Chưa thiết lập hồ sơ dị ứng
+          {% else %}
+              Chưa đủ dữ liệu
+          {% endif %}
+        </span>
+        <time>{{ item.scanned_at | vn_datetime }}</time>
       </a>{% endfor %}
     </div>{% else %}<div class="empty-state compact-empty"><span class="empty-icon">▤</span><h3>Bạn chưa có lịch sử quét</h3><p>Kết quả phân tích thành công sẽ được lưu tại đây.</p><a class="btn btn-secondary" href="{{ url_for('scan.scan_page') }}">Quét sản phẩm đầu tiên</a></div>{% endif %}
   </section>
