@@ -323,7 +323,7 @@ def find_product_by_identity(name, brand=None, barcode=None):
         return None
 
     # 1. Barcode
-    if barcode and re.fullmatch(r"\d{8,14}", str(barcode).strip()):
+    if barcode and re.fullmatch(r"\\d{8,14}", str(barcode).strip()):
         barcode_value = str(barcode).strip()
         barcode_match = next(
             (item for item in products if str(item.barcode or "").strip() == barcode_value),
@@ -1311,6 +1311,9 @@ ALLERGEN_NAME_ALIASES.update({
     "vung": "SESAME",
     "sulfit": "SULPHITES",
     # Vietnamese names and ingredient phrases for existing canonical groups.
+    # Do NOT add the bare key "ca": normalize_text() removes Vietnamese
+    # tone marks, so both "cá" (fish) and "cà" (tomato) become "ca".
+    # Bare "ca" would incorrectly classify "cà chua" as FISH.
     "ca trich": "FISH",
     "ca hoi": "FISH",
     "ca ngu": "FISH",
@@ -1345,6 +1348,11 @@ def _normalize_allergen_text(value):
     return normalize_text(value).replace("\u0111", "d")
 
 
+# The label "Cá" was normalized to the ambiguous key "ca" above.
+# Remove that key: it also matches "cà" after tone marks are stripped.
+ALLERGEN_NAME_ALIASES.pop("ca", None)
+
+
 # Use one lookup form for accented and unaccented Vietnamese spellings.
 ALLERGEN_NAME_ALIASES = {
     _normalize_allergen_text(alias): canonical
@@ -1368,6 +1376,12 @@ def resolve_allergen_tag(value):
     if raw_value in {"m\u00e8", "v\u1eebng"}:
         return "SESAME"
 
+    # Preserve the accented standalone Vietnamese word "cá".
+    # Do not accept unaccented standalone "ca" because it is ambiguous
+    # with "cà" (e.g. cà chua). Specific fish phrases are handled below.
+    if raw_value == "cá":
+        return "FISH"
+
     if raw_value.upper() in CANONICAL_ALLERGEN_IDS:
         return raw_value.upper()
 
@@ -1378,11 +1392,6 @@ def resolve_allergen_tag(value):
     if not normalized_value:
         return None
 
-    # "cá" (fish) and "cà" (tomato) both normalize to "ca".
-    # Preserve the distinction for the bare Vietnamese term.
-    if normalized_value == "ca":
-        return "FISH" if raw_value == "cá" else None
-
     canonical = ALLERGEN_NAME_ALIASES.get(normalized_value)
     if canonical:
         return canonical
@@ -1390,8 +1399,6 @@ def resolve_allergen_tag(value):
     # Allergen labels may include preparation details, e.g. "soybean oil".
     # Resolve a known alias embedded as a complete phrase, never as a substring.
     for alias in sorted(ALLERGEN_NAME_ALIASES, key=len, reverse=True):
-        if alias == "ca":
-            continue
         if alias and re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", normalized_value):
             return ALLERGEN_NAME_ALIASES[alias]
     return None
@@ -1542,15 +1549,6 @@ def ingredient_matches_allergen(
         if re.search(r"(?<!\w)(?:m\u00e8|v\u1eebng)(?!\w)", raw_ingredient):
             return True
 
-    # Check original Vietnamese spelling before accent removal:
-    # "cá" is fish, while "cà" in "cà chua" is tomato.
-    if canonical_tag == "FISH":
-        raw_ingredient = unicodedata.normalize(
-            "NFKC", str(ingredient)
-        ).casefold()
-        if re.search(r"(?<!\w)cá(?!\w)", raw_ingredient):
-            return True
-
     keywords = get_allergen_keywords(
         allergen_tag
     )
@@ -1565,15 +1563,7 @@ def ingredient_matches_allergen(
     for alias in aliases:
         if not alias:
             continue
-
-        # Do not match the ambiguous normalized alias "ca" for fish.
-        if canonical_tag == "FISH" and alias == "ca":
-            continue
-
-        if re.search(
-            r"(?<!\\w)" + re.escape(alias) + r"(?!\\w)",
-            ingredient_normalized
-        ):
+        if re.search(r"(?<!\w)" + re.escape(alias) + r"(?!\w)", ingredient_normalized):
             return True
 
     for keyword in keywords:
@@ -1583,11 +1573,6 @@ def ingredient_matches_allergen(
         )
 
         if not keyword_normalized:
-            continue
-
-        # "cá" and "cà" both normalize to "ca" after accent removal.
-        # Do not use this ambiguous bare keyword for FISH detection.
-        if canonical_tag == "FISH" and keyword_normalized == "ca":
             continue
 
         # =================================================
