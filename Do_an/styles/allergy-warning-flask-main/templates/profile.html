@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Hồ sơ cá nhân | Allergy Warning{% endblock %}
+{% block content %}
+<div class="content-shell page-section">
+  <section class="page-intro"><div><span class="eyebrow">HỒ SƠ CÁ NHÂN</span><h1>Thông tin của tôi</h1><p>Xem thông tin tài khoản và quản lý hồ sơ dị ứng.</p></div></section>
+  <section class="profile-summary card-panel"><div class="avatar-circle">{{ (user.full_name or user.email)[:1]|upper }}</div><div><h2>{{ user.full_name or "Chưa cập nhật họ tên" }}</h2><p>{{ user.email }}</p></div><span class="profile-tag">Tài khoản</span></section>
+  <section class="card-panel allergy-panel"><div class="section-title-row"><div><span class="eyebrow">CÁ NHÂN HÓA ĐỐI CHIẾU</span><h2>Dị ứng của tôi</h2></div><span class="count-badge">{{ selected_allergen_ids|length }} đã chọn</span></div><p class="section-description">Chọn các dị nguyên để backend đối chiếu khi phân tích thành phần sản phẩm.</p>
+    {% if allergens %}<form method="POST" action="{{ url_for('profile.profile') }}">
+      <div class="allergen-grid">{% for allergen in allergens %}<label class="allergen-card"><input type="checkbox" name="allergens" value="{{ allergen.id }}" {% if allergen.id in selected_allergen_ids %}checked{% endif %}><span class="allergen-check" aria-hidden="true"></span><span class="allergen-content"><strong>{{ allergen.name }}</strong>{% if allergen.description %}<small>{{ allergen.description }}</small>{% endif %}</span></label>{% endfor %}</div>
+      <div class="form-actions"><button type="submit" class="btn btn-primary">Lưu hồ sơ dị ứng</button><a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">Quay lại dashboard</a></div>
+    </form>{% else %}<div class="empty-state compact-empty"><span class="empty-icon">◎</span><h3>Chưa có danh sách dị nguyên</h3><p>Danh sách dị nguyên chưa được cấu hình trong cơ sở dữ liệu.</p></div>{% endif %}
+  </section>
+  <div class="notice-banner"><span class="notice-icon">i</span><p>Hồ sơ này chỉ hỗ trợ việc đối chiếu thành phần. Hãy xác minh thông tin trên bao bì và tham khảo chuyên gia y tế.</p></div>
+</div>
+{% endblock %}

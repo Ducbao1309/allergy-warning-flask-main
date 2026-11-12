@@ -1,0 +1,212 @@
+```latex
+% ---------------------------------------------------------------------
+% PHỤ LỤC
+% ĐỀ TÀI: XÂY DỰNG HỆ THỐNG ĐỌC NHÃN MÁC VÀ CẢNH BÁO
+% THÀNH PHẦN DỊ ỨNG THỰC PHẨM
+% ---------------------------------------------------------------------
+
+\chapter{Phụ lục}
+\label{ch:phuluc}
+\markboth{Phụ lục}{}
+
+Phụ lục trình bày hướng dẫn cài đặt và chạy hệ thống Allergy Warning,
+bảng tự kiểm trước khi nộp báo cáo và phần nhận xét của giảng viên
+hướng dẫn. Các nội dung này hỗ trợ việc kiểm tra, trình diễn và
+đánh giá sản phẩm.
+
+% =====================================================================
+% A. HUONG DAN CAI DAT VA CHAY CHUONG TRINH
+% =====================================================================
+
+\section*{A. Hướng dẫn cài đặt và chạy chương trình}
+\phantomsection
+\addcontentsline{toc}{section}{A. Hướng dẫn cài đặt và chạy chương trình}
+
+Phần này trình bày các bước cơ bản để cài đặt và khởi chạy hệ thống
+Allergy Warning trên máy tính Windows. Người thực hiện cần chuẩn bị
+mã nguồn, Python, các thư viện phụ thuộc và cấu hình cơ sở dữ liệu
+theo yêu cầu của dự án.
+
+\subsection*{Bước 1. Chuẩn bị mã nguồn}
+
+Tải hoặc sao chép mã nguồn của dự án về máy tính. Nếu mã nguồn đã
+được lưu trên GitHub, có thể sử dụng lệnh sau sau khi thay đường dẫn
+bằng địa chỉ kho mã nguồn thực tế:
+
+\begin{lstlisting}[language=bash, caption={Tải mã nguồn dự án}]
+git clone <URL_REPOSITORY>
+cd allergy-warning-flask-main
+\end{lstlisting}
+
+Nếu đã có sẵn thư mục mã nguồn trên máy tính, có thể mở trực tiếp
+thư mục đó bằng Visual Studio Code hoặc terminal.
+
+\subsection*{Bước 2. Tạo môi trường Python}
+
+Mở terminal tại thư mục dự án và tạo môi trường ảo để quản lý các
+thư viện sử dụng trong ứng dụng:
+
+\begin{lstlisting}[language=bash, caption={Tạo và kích hoạt môi trường ảo}]
+python -m venv .venv
+.venv\Scripts\activate
+\end{lstlisting}
+
+Sau khi kích hoạt thành công, cài đặt các thư viện được khai báo
+trong tệp \code{requirements.txt} nếu dự án có tệp này:
+
+\begin{lstlisting}[language=bash, caption={Cài đặt các thư viện phụ thuộc}]
+python -m pip install -r requirements.txt
+\end{lstlisting}
+
+Nếu dự án chưa có tệp \code{requirements.txt}, cần cài đặt các thư
+viện theo danh sách phụ thuộc thực tế của mã nguồn.
+
+\subsection*{Bước 3. Cấu hình cơ sở dữ liệu và dịch vụ AI}
+
+Trước khi chạy ứng dụng, cần kiểm tra cấu hình kết nối cơ sở dữ
+liệu và các thông tin cần thiết để sử dụng dịch vụ AI.
+
+Các thông tin cần kiểm tra gồm:
+\begin{itemize}
+    \item Thông tin kết nối cơ sở dữ liệu được cấu hình trong dự án.
+    \item Cơ sở dữ liệu và các bảng cần thiết đã được tạo.
+    \item Khóa API của dịch vụ AI được cấu hình nếu ứng dụng sử dụng
+    dịch vụ này.
+    \item Các biến môi trường cần thiết đã được khai báo đúng theo
+    cấu hình của dự án.
+\end{itemize}
+
+Không nên đưa mật khẩu cơ sở dữ liệu hoặc khóa API thật vào mã
+nguồn công khai. Những thông tin này cần được lưu trong tệp cấu
+hình riêng hoặc biến môi trường theo cách triển khai của dự án.
+
+\subsection*{Bước 4. Khởi chạy ứng dụng}
+
+Nếu tệp khởi chạy chính của dự án là \code{app.py}, có thể chạy
+ứng dụng bằng lệnh:
+
+\begin{lstlisting}[language=bash, caption={Khởi chạy ứng dụng Flask}]
+python app.py
+\end{lstlisting}
+
+Nếu dự án sử dụng một tệp khởi chạy khác, cần thay lệnh trên bằng
+lệnh tương ứng với cấu trúc mã nguồn thực tế.
+
+Sau khi ứng dụng khởi động thành công, mở trình duyệt và truy cập
+địa chỉ cục bộ được hiển thị trong terminal. Với cấu hình mặc định
+thường dùng của Flask, địa chỉ có thể là:
+
+\begin{center}
+    \url{http://127.0.0.1:5000}
+\end{center}
+
+Địa chỉ và cổng truy cập cần được điều chỉnh theo thông báo thực tế
+khi chạy ứng dụng.
+
+\subsection*{Bước 5. Kiểm tra các chức năng chính}
+
+Sau khi khởi chạy hệ thống, tiến hành kiểm tra các chức năng đã
+được triển khai:
+\begin{enumerate}
+    \item Mở trang đăng nhập và kiểm tra khả năng truy cập hệ thống.
+    \item Thử đăng ký tài khoản nếu chức năng này được bật.
+    \item Truy cập giao diện chính và kiểm tra các chức năng được cung cấp.
+    \item Tải lên ảnh nhãn thực phẩm để kiểm tra quy trình phân tích.
+    \item Đối chiếu kết quả nhận diện thành phần với nhãn thực phẩm gốc.
+    \item Kiểm tra thông tin dị nguyên và nội dung cảnh báo được hiển thị.
+    \item Kiểm tra hồ sơ dị ứng và lịch sử quét nếu các chức năng này
+    đã được triển khai.
+\end{enumerate}
+
+Kết quả kiểm tra cần được ghi nhận theo tình trạng chạy thực tế.
+Nếu xảy ra lỗi kết nối cơ sở dữ liệu, lỗi dịch vụ AI hoặc lỗi xử
+lý ảnh, cần kiểm tra thông báo trên terminal và cấu hình liên quan.
+
+% =====================================================================
+% B. BANG TU KIEM TRUOC KHI NOP
+% =====================================================================
+
+\section*{B. Bảng tự kiểm trước khi nộp}
+\phantomsection
+\addcontentsline{toc}{section}{B. Bảng tự kiểm trước khi nộp}
+
+Trước khi nộp báo cáo, nhóm cần kiểm tra lại mã nguồn, tài liệu,
+các chức năng và kết quả thực tế của hệ thống. Bảng dưới đây dùng
+để ghi nhận những nội dung đã hoàn thành.
+
+\begin{tukiem}
+    \item Đã kiểm tra khả năng cài đặt và chạy hệ thống trên môi
+    trường phù hợp.
+
+    \item Đã chạy thử các chức năng chính trước khi trình diễn
+    sản phẩm.
+
+    \item Đã kiểm tra quy trình tải ảnh, phân tích nhãn và hiển
+    thị kết quả.
+
+    \item Đã kiểm tra việc đối chiếu thành phần với dữ liệu dị
+    nguyên và cách hiển thị cảnh báo.
+
+    \item Đã kiểm tra xử lý các trường hợp ảnh không hợp lệ hoặc
+    quá trình phân tích gặp lỗi.
+
+    \item Đã kiểm tra kết nối cơ sở dữ liệu và các chức năng lưu
+    trữ có trong hệ thống.
+
+    \item Đã chuẩn bị mã nguồn và hướng dẫn cài đặt để người khác
+    có thể thực hiện lại theo các bước phù hợp.
+
+    \item Đã kiểm tra các hình, bảng, sơ đồ và nội dung trích dẫn
+    trong báo cáo.
+
+    \item Đã đối chiếu các mục tiêu ở Chương~\ref{ch:modau} với
+    kết quả và kết luận tại Chương~\ref{ch:ketluan}.
+
+    \item Các số liệu đánh giá trong báo cáo đều dựa trên kết quả
+    kiểm thử thực tế; những nội dung chưa kiểm thử được trình bày
+    rõ là hạn chế.
+
+    \item Đã kiểm tra tài liệu tham khảo, nguồn dữ liệu và các
+    thư viện hoặc dịch vụ bên ngoài được sử dụng.
+
+    \item Đã rà soát nội dung báo cáo, loại bỏ các đoạn hướng dẫn
+    mẫu và thông tin không thuộc đề tài Allergy Warning.
+
+    \item Đã kiểm tra lại thông tin sinh viên, giảng viên hướng
+    dẫn, tên đề tài và các thông tin trên trang bìa.
+\end{tukiem}
+
+\begin{luuy}
+Bảng tự kiểm cần được đánh dấu dựa trên tình trạng thực tế của
+đồ án. Không đánh dấu hoàn thành đối với chức năng chưa được
+kiểm tra hoặc chưa triển khai. Trước khi nộp, cần tìm trong
+toàn bộ báo cáo những đoạn hướng dẫn mẫu còn sót lại và thay
+bằng nội dung phù hợp với đề tài.
+\end{luuy}
+
+% =====================================================================
+% C. NHAN XET CUA GIANG VIEN HUONG DAN
+% =====================================================================
+
+\section*{C. Nhận xét của giảng viên hướng dẫn}
+\phantomsection
+\addcontentsline{toc}{section}{C. Nhận xét của giảng viên hướng dẫn}
+
+\khungnhanxet[7.5cm]
+
+\vspace{0.8em}
+
+\noindent
+\begin{minipage}[t]{0.5\textwidth}
+    \color{daunavy}
+    {\color{daumaroon}\bfseries Điểm số}
+
+    \vspace{0.7em}
+    \dongchamnhan{Bằng số:}
+
+    \vspace{0.9em}
+    \dongchamnhan{Bằng chữ:}
+\end{minipage}
+\hfill
+\okyten{\dauGVHD}{Giảng viên hướng dẫn}
+```

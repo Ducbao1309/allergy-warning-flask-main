@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ product.name }} | Admin{% endblock %}
+
+{% block admin_content %}
+<header class="admin-page-heading admin-detail-heading">
+  <div>
+    <span class="eyebrow">SẢN PHẨM #{{ product.id }}</span>
+    <h1>{{ product.name }}</h1>
+    <p>{{ product.brand or "Chưa có thương hiệu" }}</p>
+  </div>
+  <div class="admin-heading-actions">
+    <a class="btn btn-secondary" href="{{ url_for('admin.products') }}">Danh sách</a>
+    <a class="btn btn-primary" href="{{ url_for('admin.product_edit', product_id=product.id) }}">Chỉnh sửa</a>
+  </div>
+</header>
+
+<section class="admin-detail-grid">
+  <article class="admin-detail-card card-panel">
+    <h2>Thông tin sản phẩm</h2>
+    <dl class="admin-detail-list">
+      <div><dt>ID</dt><dd>{{ product.id }}</dd></div>
+      <div><dt>Tên</dt><dd>{{ product.name }}</dd></div>
+      <div><dt>Thương hiệu</dt><dd>{{ product.brand or "—" }}</dd></div>
+      <div><dt>Barcode</dt><dd>{{ product.barcode or "—" }}</dd></div>
+      <div><dt>Ngày tạo</dt><dd>{{ product.created_at.strftime("%d/%m/%Y %H:%M") if product.created_at else "—" }}</dd></div>
+      <div><dt>Image URL</dt><dd class="admin-break-word">{{ product.image_url or "—" }}</dd></div>
+      <div><dt>Source URL</dt><dd class="admin-break-word">{{ product.source_url or "—" }}</dd></div>
+    </dl>
+  </article>
+
+  <article class="admin-detail-card card-panel">
+    <h2>Thông tin nhãn</h2>
+    <div class="admin-text-block"><h3>Ingredients text</h3><p>{{ product.ingredients_text or "Chưa có dữ liệu" }}</p></div>
+    <div class="admin-text-block"><h3>Allergens text</h3><p>{{ product.allergens_text or "Chưa có dữ liệu" }}</p></div>
+    <div class="admin-text-block"><h3>Allergens tags</h3><pre>{{ product.allergens_tags or "Chưa có dữ liệu" }}</pre></div>
+  </article>
+</section>
+
+<section class="admin-detail-card card-panel admin-ingredients-panel">
+  <h2>Thành phần đã chuẩn hóa <span class="admin-inline-count">{{ product.ingredients|length }}</span></h2>
+  {% if product.ingredients %}
+  <div class="admin-table-scroll"><table class="admin-table">
+    <thead><tr><th>Tên</th><th>Tên tiếng Anh</th><th>Open Food Facts tag</th></tr></thead>
+    <tbody>{% for ingredient in product.ingredients %}<tr><td>{{ ingredient.name }}</td><td>{{ ingredient.name_en or "—" }}</td><td>{{ ingredient.off_tag or "—" }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted-copy">Sản phẩm chưa có các dòng ProductIngredient.</p>{% endif %}
+</section>
+
+<section class="admin-delete-panel">
+  <div><strong>Xóa sản phẩm</strong><p>Thành phần liên kết sẽ được xử lý theo quan hệ hiện có. Lịch sử quét được giữ lại.</p></div>
+  <form method="post" action="{{ url_for('admin.product_delete', product_id=product.id) }}" data-confirm-delete>
+    <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+    <button class="btn btn-danger" type="submit">Xóa sản phẩm</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,382 @@
+% =====================================================================
+%  styles/dau.sty
+%  Nhận diện và định dạng đồ án tốt nghiệp, Khoa Công nghệ Thông tin,
+%  Trường Đại học Kiến trúc Đà Nẵng.
+%
+%  Nguồn gốc: chuyển thể từ mẫu đồ án của Trường Đại học Nha Trang
+%  (github.com/nd-hung/thesis-template, tác giả TS. Nguyễn Đình Hưng),
+%  giữ nguyên bộ lệnh khai báo thông tin và các môi trường lời cam đoan,
+%  lời cảm ơn, tóm tắt. Toàn bộ phần nhận diện, phông chữ, bảng màu,
+%  trang bìa và các hộp trình bày được thay bằng chuẩn của DAU.
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{dau}[2026/08/18 Do an TTNT AIP202, Khoa CNTT DAU]
+% ---------- Fonts & ngôn ngữ ----------------------------------------
+\RequirePackage{fontspec}
+\RequirePackage{polyglossia}
+\setdefaultlanguage{vietnamese}
+\setotherlanguage{english}
+% Dùng các font phổ biến có sẵn trên Windows.
+% Không dùng Noto Sans / Latin Modern qua cơ chế tạo font của MiKTeX.
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+% ---------- Toán & ký tự unicode ------------------------------------
+\RequirePackage{amsmath}
+\RequirePackage{newunicodechar}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{←}{\ensuremath{\leftarrow}}
+\newunicodechar{↑}{\ensuremath{\uparrow}}
+\newunicodechar{↓}{\ensuremath{\downarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{≥}{\ensuremath{\geq}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{≠}{\ensuremath{\neq}}
+\newunicodechar{·}{\ensuremath{\cdot}}
+\newunicodechar{×}{\ensuremath{\times}}
+\newunicodechar{∈}{\ensuremath{\in}}
+\newunicodechar{∞}{\ensuremath{\infty}}
+% ---------- Bảng màu DAU --------------------------------------------
+\RequirePackage[dvipsnames]{xcolor}
+\definecolor{daumaroon}{HTML}{990000}
+\definecolor{daugold}{HTML}{FBAE40}
+\definecolor{daunavy}{HTML}{0E2841}
+\definecolor{forestgreen}{HTML}{0C2F1F}
+\definecolor{agentragreen}{HTML}{196B24}
+\definecolor{charcoal}{HTML}{0E2841}
+\definecolor{gray700}{HTML}{384152}
+\definecolor{gray500}{HTML}{6B7280}
+\definecolor{gray300}{HTML}{DADEE2}
+\definecolor{gray100}{HTML}{F3F4F6}
+\definecolor{lightlime}{HTML}{F0F5D5}
+\definecolor{lightforest}{HTML}{E8F0EA}
+\definecolor{lightwarm}{HTML}{FCEFD9}
+\definecolor{lightnavy}{HTML}{E7EBF0}
+% ---------- Khổ trang & lề ------------------------------------------
+\RequirePackage{geometry}
+\newcommand{\dauLayout}{%
+     \geometry{a4paper, left=30mm, right=20mm, top=25mm, bottom=25mm,
+               headheight=27pt, headsep=0.35cm, footskip=1.0cm}}
+\RequirePackage{indentfirst}
+\setlength{\emergencystretch}{3em}
+% ---------- Gói chính -----------------------------------------------
+\RequirePackage{graphicx}
+\graphicspath{{figs/}{assets/}{./}}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+\RequirePackage{booktabs}
+\RequirePackage{colortbl}
+\RequirePackage{multirow}
+\RequirePackage{enumitem}
+\RequirePackage{float}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{listings}
+\RequirePackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, shadows}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\renewcommand{\arraystretch}{1.25}
+% ---------- Giải thuật, đặt tên tiếng Việt --------------------------
+\RequirePackage{algorithm}
+\RequirePackage{algpseudocode}
+\makeatletter
+\renewcommand{\ALG@name}{Giải thuật}
+\renewcommand{\listalgorithmname}{Danh mục giải thuật}
+\def\algbackskip{\hskip-\ALG@thistlm}
+% ---------- Caption -------------------------------------------------
+\RequirePackage{caption}
+\captionsetup{font=small, labelfont={bf,color=daumaroon}, labelsep=period}
+\captionsetup[table]{position=top}
+\captionsetup[algorithm]{labelsep=period}
+% ---------- Macro nội tuyến -----------------------------------------
+\newcommand{\en}[1]{{\small\itshape\color{gray500}\textenglish{#1}}}
+\newcommand{\code}[1]{{\normalfont\ttfamily\color{daumaroon}#1}}
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\goiy}[1]{{\itshape\color{gray500}Gợi ý: #1}}
+\tikzset{soft/.style={drop shadow={black!30, opacity=0.26,
+                                       shadow xshift=0.5pt, shadow yshift=-0.7pt}}}
+% ---------- Listings, style DAU -------------------------------------
+\lstdefinestyle{dau}{
+     basicstyle=\ttfamily\small\color{daunavy},
+     keywordstyle=\color{daumaroon}\bfseries,
+     commentstyle=\color{gray500},
+     stringstyle=\color{forestgreen},
+     numbers=left, numberstyle=\tiny\color{gray500}, numbersep=8pt,
+     showstringspaces=false, tabsize=2, breaklines=true, columns=fullflexible,
+     frame=leftline, framerule=2.2pt, rulecolor=\color{daugold},
+     backgroundcolor=\color{gray100}, xleftmargin=14pt, framexleftmargin=14pt,
+     aboveskip=8pt, belowskip=6pt, lineskip=1pt, keepspaces=true,
+}
+\lstset{style=dau}
+\renewcommand{\lstlistingname}{Mã nguồn}
+\renewcommand{\lstlistlistingname}{Danh mục mã nguồn}
+% ---------- Đánh số ví dụ theo chương -------------------------------
+\newcounter{vidu}[chapter]
+\renewcommand{\thevidu}{\thechapter.\arabic{vidu}}
+% ---------- Các hộp trình bày ---------------------------------------
+\newtcolorbox{dinhnghia}[1][]{enhanced, breakable,
+     drop shadow={black!25, opacity=0.32}, colback=lightlime, colframe=agentragreen,
+     boxrule=0pt, leftrule=3.5pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+     fonttitle=\sffamily\footnotesize\bfseries\color{forestgreen}, coltitle=forestgreen,
+     attach boxed title to top left={yshift=-2.6mm, xshift=4mm},
+     boxed title style={colback=lightlime, boxrule=0pt, sharp corners},
+     title={ĐỊNH NGHĨA\ifx\relax#1\relax\else\~\textperiodcentered\~#1\fi}}
+\newtcolorbox{ghinho}{enhanced, breakable,
+     drop shadow={black!25, opacity=0.32}, colback=lightforest, colframe=agentragreen,
+     boxrule=0pt, leftrule=3.5pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+     fonttitle=\sffamily\footnotesize\bfseries\color{forestgreen},
+     attach boxed title to top left={yshift=-2.6mm, xshift=4mm},
+     boxed title style={colback=lightforest, boxrule=0pt, sharp corners},
+     title={GHI NHỚ}}
+\newtcolorbox{luuy}{enhanced, breakable,
+     drop shadow={black!25, opacity=0.32}, colback=lightwarm, colframe=daumaroon,
+     boxrule=0pt, leftrule=3.5pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt,
+     fonttitle=\sffamily\footnotesize\bfseries\color{daumaroon},
+     attach boxed title to top left={yshift=-2.6mm, xshift=4mm},
+     boxed title style={colback=lightwarm, boxrule=0pt, sharp corners},
+     title={LƯU Ý}}
+\newtcolorbox{chuy}{enhanced, breakable,
+     colback=gray100, colframe=gray300, boxrule=0.6pt, arc=2pt,
+     left=6pt, right=6pt, top=4pt, bottom=4pt, fontupper=\small\color{charcoal}}
+\newtcolorbox{vidu}[1][]{enhanced, breakable,
+     colback=white, colframe=daunavy, boxrule=0.8pt, arc=2pt,
+     left=6pt, right=6pt, top=4pt, bottom=4pt,
+     fonttitle=\sffamily\footnotesize\bfseries\color{white}, coltitle=white,
+     colbacktitle=daunavy, attach boxed title to top left={yshift=-0.1mm, xshift=4mm},
+     boxed title style={boxrule=0pt, arc=1pt},
+     title={\refstepcounter{vidu}Ví dụ\~\thevidu\ifx\relax#1\relax\else:\~#1\fi}}
+\newtcolorbox{muctieu}{enhanced, breakable,
+     drop shadow={black!22, opacity=0.28}, colback=lightnavy, colframe=daunavy,
+     boxrule=0pt, leftrule=3.5pt, arc=2pt, left=6pt, right=6pt, top=5pt, bottom=5pt,
+     fonttitle=\sffamily\small\bfseries\color{daunavy},
+     attach boxed title to top left={yshift=-2.8mm, xshift=4mm},
+     boxed title style={colback=lightnavy, boxrule=0pt, sharp corners},
+     title={MỤC TIÊU CHƯƠNG}}
+\newtcolorbox{mau}{blanker, breakable,
+     borderline west={2.2pt}{0pt}{gray300},
+     left=10pt, right=0pt, top=1pt, bottom=1pt,
+     before upper={\par\noindent{\scriptsize\sffamily\color{gray500}%
+       NỘI DUNG MẪU, hãy thay bằng nội dung của em rồi xoá khối này\par}\vspace{1pt}}}
+% Danh sách tự kiểm có ô vuông
+\newcommand{\okvuong}{\raisebox{-0.05em}{\color{daumaroon}\framebox[0.8em]{\rule{0pt}{0.62em}}}}
+\newlist{tukiem}{itemize}{1}
+\setlist[tukiem]{label={\okvuong}, leftmargin=2.0em, itemsep=4pt}
+% ---------- Style TikZ dùng chung -----------------------------------
+\tikzset{
+     clsbox/.style = {rectangle, rounded corners=2pt, draw=daumaroon, line width=1pt,
+                     fill=white, align=center, inner sep=5pt, font=\footnotesize, soft},
+     objbox/.style = {rectangle, rounded corners=2pt, draw=daunavy, line width=0.8pt,
+                     fill=lightnavy, align=center, inner sep=5pt, font=\footnotesize, soft},
+     membox/.style = {rectangle, draw=charcoal, line width=0.5pt, fill=gray100,
+                     align=center, inner sep=4pt, font=\scriptsize, soft},
+     flowarr/.style = {-{Stealth[length=2.6mm]}, line width=1.0pt, color=daumaroon},
+     startstop/.style = {rectangle, rounded corners, minimum width=2.6cm, minimum height=0.9cm,
+                     text centered, draw=daumaroon, fill=lightwarm, font=\footnotesize},
+     io/.style = {trapezium, trapezium left angle=70, trapezium right angle=110,
+                     minimum width=2.6cm, minimum height=0.9cm, text centered,
+                     draw=daunavy, fill=lightnavy, font=\footnotesize},
+     process/.style = {rectangle, minimum width=2.6cm, minimum height=0.9cm, text centered,
+                     draw=daunavy, fill=white, font=\footnotesize},
+     decision/.style = {diamond, aspect=2, minimum width=2.6cm, text centered,
+                     draw=agentragreen, fill=lightforest, font=\footnotesize},
+}
+% ---------- Tiêu đề chương / mục ------------------------------------
+\RequirePackage{titlesec}
+\titleformat{\chapter}[display]
+     {\sffamily\bfseries}
+     {\flushright\fontsize{52}{52}\selectfont\color{daugold}\thechapter}
+     {0pt}
+     {\color{daumaroon}\Huge\filright}
+     [\vspace{2pt}{\color{daugold}\titlerule[2.5pt]}]
+\titlespacing*{\chapter}{0pt}{0pt}{16pt}
+\titleformat{\section}
+     {\sffamily\Large\bfseries\color{daumaroon}}{\thesection}{0.6em}{}
+\titleformat{\subsection}[block]
+     {\sffamily\large\bfseries\color{daunavy}}
+     {\thesubsection}
+     {0.6em}
+     {}
+\titleformat{\subsubsection}
+     {\sffamily\normalsize\bfseries\color{gray700}}{\thesubsubsection}{0.6em}{}
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
+% ---------- Header / footer -----------------------------------------
+\RequirePackage{fancyhdr}
+\newcommand{\dauPageStyle}{%
+     \pagestyle{fancy}%
+     \fancyhf{}%
+     \renewcommand{\headrulewidth}{0.6pt}%
+     \renewcommand{\headrule}{\hbox to\headwidth{\color{daugold}\leaders\hrule height \headrulewidth\hfill}}%
+     \fancyhead[L]{\footnotesize\color{gray500}\nouppercase{\leftmark}}%
+     \fancyhead[R]{\footnotesize\color{gray500}\@rname}%
+     \fancyfoot[L]{\footnotesize\color{gray500}\@stuname{} \textperiodcentered{} \@smssv}%
+     % Phần đầu: số La Mã nằm giữa.
+     % Phần nội dung chính: số Ả Rập nằm bên phải.
+     \fancyfoot[C]{\if@mainmatter\else\footnotesize\color{gray500}\thepage\fi}%
+     \fancyfoot[R]{\if@mainmatter\footnotesize\color{gray500}\thepage\fi}%
+     \renewcommand{\chaptermark}[1]{\markboth{Chương \thechapter.\ ##1}{}}%
+}
+% Kiểu trang plain dùng cho trang đầu chương.
+% Vị trí số trang vẫn theo quy tắc của phần đầu và phần nội dung.
+\fancypagestyle{plain}{%
+     \fancyhf{}%
+     \renewcommand{\headrulewidth}{0pt}%
+     \fancyfoot[C]{\if@mainmatter\else\footnotesize\color{gray500}\thepage\fi}%
+     \fancyfoot[R]{\if@mainmatter\footnotesize\color{gray500}\thepage\fi}%
+}
+\makeatletter
+\renewcommand{\@pnumwidth}{2.2em}
+\renewcommand{\@tocrmarg}{3.2em}
+% =====================================================================
+% THÔNG TIN ĐỒ ÁN
+% =====================================================================
+\newcommand{\@sdeptname}{KHOA CÔNG NGHỆ THÔNG TIN}
+\newcommand{\csdeptname}[1]{\renewcommand{\@sdeptname}{#1}}
+\newcommand{\@tname}{TÊN ĐỒ ÁN TỐT NGHIỆP}
+\newcommand{\ctname}[1]{\renewcommand{\@tname}{#1}}
+\newcommand{\@stuname}{Nguyễn Văn A}
+\newcommand{\cstuname}[1]{\renewcommand{\@stuname}{#1}}
+\newcommand{\@smssv}{2022xxxxx}
+\newcommand{\cmssv}[1]{\renewcommand{\@smssv}{#1}}
+\newcommand{\@sCouncil}{Công nghệ thông tin}
+\newcommand{\csCouncil}[1]{\renewcommand{\@sCouncil}{#1}}
+\newcommand{\@sSupervise}{TS. Đỗ Phúc Hảo}
+\newcommand{\csSupervise}[1]{\renewcommand{\@sSupervise}{#1}}
+\newcommand{\@ttime}{\the\year}
+\newcommand{\cttime}[1]{\renewcommand{\@ttime}{#1}}
+\newcommand{\@rname}{BÁO CÁO ĐỒ ÁN TRÍ TUỆ NHÂN TẠO}
+\newcommand{\crname}[1]{\renewcommand{\@rname}{#1}}
+\newcommand{\@smonhoc}{Học phần AIP202 \textperiodcentered{} 2 tín chỉ}
+\newcommand{\cmonhoc}[1]{\renewcommand{\@smonhoc}{#1}}
+\newcommand{\@slopsv}{CNTT 22A}
+\newcommand{\clopsv}[1]{\renewcommand{\@slopsv}{#1}}
+\newcommand{\@splace}{Đà Nẵng}
+\newcommand{\csplace}[1]{\renewcommand{\@splace}{#1}}
+% Lệnh công khai để gọi lại thông tin trong các file chương.
+\newcommand{\dauSinhVien}{\@stuname}
+\newcommand{\dauMSSV}{\@smssv}
+\newcommand{\dauLop}{\@slopsv}
+\newcommand{\dauMonHoc}{\@smonhoc}
+\newcommand{\dauGVHD}{\@sSupervise}
+\newcommand{\dauNganh}{\@sCouncil}
+\newcommand{\dauTenDeTai}{\@tname}
+\newcommand{\dauNoi}{\@splace}
+\newcommand{\dauNam}{\@ttime}
+% =====================================================================
+% TRANG BÌA 1
+% =====================================================================
+\def\coverpage{%
+\begin{titlepage}
+\pagestyle{empty}
+\begin{tikzpicture}[remember picture, overlay]
+     \draw[line width=0.75pt, color=daumaroon]
+       ($(current page.north west) + (2.6cm,-1.8cm)$)
+       rectangle
+       ($(current page.south east) + (-1.6cm,1.6cm)$);
+     \draw[line width=2.0pt, color=daugold]
+       ($(current page.north west) + (2.75cm,-1.95cm)$)
+       rectangle
+       ($(current page.south east) + (-1.75cm,1.75cm)$);
+\end{tikzpicture}
+\begin{center}
+{\fontsize{13}{16}\selectfont BỘ GIÁO DỤC VÀ ĐÀO TẠO}\\[4pt]
+{\fontsize{15}{18}\selectfont\bfseries\color{daumaroon} TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG}\\[4pt]
+{\fontsize{13}{16}\selectfont\bfseries\color{daunavy} \@sdeptname}\\[6pt]
+{\color{daugold}\rule{5cm}{1.6pt}}\\[1.5cm]
+\includegraphics[height=2.6cm]{dau-logo.png}\\[1.5cm]
+{\fontsize{14}{17}\selectfont\color{daunavy} \@rname}\\[3pt]
+{\fontsize{11}{14}\selectfont\color{gray500} \@smonhoc}\\[1.4cm]
+{\fontsize{16}{21}\selectfont\bfseries\color{daumaroon}
+    \parbox[c][3.2cm][c]{15.0cm}{\centering \@tname}}\\[0.9cm]
+\end{center}
+{\fontsize{12}{18}\selectfont\setlength{\parskip}{0pt}\setlength{\parindent}{0pt}
+\begin{flushleft}
+\begin{tabular}{@{}>{\bfseries\color{daunavy}}l @{\hspace{0.3cm}}c@{\hspace{0.3cm}}>{\raggedright\arraybackslash\bfseries}p{8.8cm}@{}}
+     Sinh viên thực hiện & : &
+     \begin{tabular}[t]{@{}l@{\hspace{0.4cm}}l@{}}
+       \mdseries Nguyễn Thị Ngọc Ánh & \mdseries (2351220148)\\[5pt]
+       \mdseries Huỳnh Đức Bảo      & \mdseries (2351220048)
+     \end{tabular}\\[6pt]
+     Lớp & : & \@slopsv\\[4pt]
+     Ngành & : & \@sCouncil\\[4pt]
+     Giảng viên hướng dẫn & : & \@sSupervise\\[4pt]
+     Năm học & : & \@ttime\\
+\end{tabular}
+\end{flushleft}}
+\vfill
+\begin{center}
+{\fontsize{13}{16}\selectfont\color{daunavy} \@splace{} \textperiodcentered{} \@ttime}
+\end{center}
+\vspace{0.6cm}
+\end{titlepage}}
+% =====================================================================
+% TRANG BÌA 2 (TUỲ CHỌN)
+% =====================================================================
+\def\coverpagehiendai{%
+\begin{titlepage}
+\begin{tikzpicture}[remember picture, overlay]
+     \fill[white] (current page.north west) rectangle (current page.south east);
+     \node[anchor=north, opacity=0.06] at ([yshift=-3cm]current page.north)
+       {\includegraphics[width=0.8\paperwidth]{dau-campus.png}};
+     \node[anchor=north west] at ([xshift=2cm, yshift=-2cm]current page.north west)
+       {\includegraphics[height=1.6cm]{dau-logo.png}};
+     \node[anchor=north west, text=daumaroon, align=left]
+       at ([xshift=4cm, yshift=-2.25cm]current page.north west)
+       {\large\bfseries TRƯỜNG ĐẠI HỌC KIẾN TRÚC ĐÀ NẴNG\\[2pt]
+        {\normalsize\mdseries\color{daunavy}\@sdeptname}};
+     \fill[daumaroon] ([yshift=-9.0cm]current page.north west) rectangle ([yshift=-12.4cm]current page.north east);
+     \fill[daugold]   ([yshift=-12.4cm]current page.north west) rectangle ([yshift=-12.65cm]current page.north east);
+     \node[anchor=west, text=white, align=left, text width=0.80\paperwidth]
+       at ([xshift=2.4cm, yshift=-10.7cm]current page.north west)
+       {\fontsize{17}{23}\selectfont\bfseries \@tname};
+     \node[anchor=north west, text=daunavy, align=left, text width=0.80\paperwidth]
+       at ([xshift=2.4cm, yshift=-13.5cm]current page.north west)
+       {\renewcommand{\arraystretch}{1.6}%
+        \begin{tabular}{@{}>{\raggedright\arraybackslash\bfseries\color{daumaroon}}p{5.3cm} >{\raggedright\arraybackslash\color{daunavy}}p{8.6cm}@{}}
+           Loại báo cáo: & \@rname\\
+           Sinh viên thực hiện: & \@stuname{} (\@smssv)\\
+           Ngành: & \@sCouncil\\
+           Giảng viên hướng dẫn: & \@sSupervise\\
+        \end{tabular}};
+     \node[anchor=south, text=daunavy, align=center]
+       at ([yshift=1.6cm]current page.south)
+       {{\large\itshape Học thật \textperiodcentered{} làm thật \textperiodcentered{} code thật}\\[4pt]
+        {\small\color{gray500}\@splace{} \textperiodcentered{} \@ttime}};
+\end{tikzpicture}
+\end{titlepage}}
+% =====================================================================
+% CÁC TRANG ĐẦU: LỜI CAM ĐOAN, LỜI CẢM ƠN, TÓM TẮT
+% =====================================================================
+\newcommand{\dautrangdau}[1]{%
+     \chapter*{#1}\addcontentsline{toc}{chapter}{#1}\markboth{#1}{}}
+\newenvironment{declaration}{\dautrangdau{Lời cam đoan}}{}
+\newenvironment{acknowledgments}{\dautrangdau{Lời cảm ơn}}{}
+\@ifundefined{abstract}
+     {\newenvironment{abstract}{\dautrangdau{Tóm tắt}}{}}
+     {\renewenvironment{abstract}{\dautrangdau{Tóm tắt}}{}}
+% Ô ký tên
+\newcommand{\okyten}[2]{%
+\par\noindent\begin{minipage}[t]{0.46\textwidth}
+\centering\itshape \@splace, ngày \dots{} tháng \dots{} năm \dots\\[2pt]
+#2\\[1.8cm]
+\upshape\bfseries #1
+\end{minipage}}
+\newcommand{\dongcham}{\par\noindent\hbox to \linewidth{\color{gray500}\dotfill}}
+\newcommand{\dongchamnhan}[1]{\par\noindent\hbox to \linewidth{#1\~\dotfill}}
+\newcommand{\khungnhanxet}[1][8.5cm]{%
+\noindent\begin{tcolorbox}[enhanced, colback=white, colframe=gray300,
+     boxrule=0.8pt, arc=2pt, height=#1, left=8pt, right=8pt, top=8pt]
+\dongcham\vspace{2.0em}\dongcham\vspace{2.0em}\dongcham\vspace{2.0em}%
+\dongcham\vspace{2.0em}\dongcham\vspace{2.0em}\dongcham
+\end{tcolorbox}}
+% ---------- Danh mục tài liệu tham khảo -----------------------------
+\RequirePackage{etoolbox}
+\AtBeginEnvironment{thebibliography}{\raggedright}
+% ---------- hyperref (nạp gần cuối) ---------------------------------
+\RequirePackage[unicode, colorlinks=true, urlcolor=daunavy,
+                   citecolor=agentragreen, linkcolor=daumaroon,
+                   pdfborder={0 0 0}]{hyperref}
+\RequirePackage{url}
+\makeatother
+
+\endinput

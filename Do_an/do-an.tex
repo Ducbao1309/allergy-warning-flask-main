@@ -1,0 +1,271 @@
+% !TEX program = xelatex
+% =====================================================================
+% BÁO CÁO ĐỒ ÁN TRÍ TUỆ NHÂN TẠO - HỌC PHẦN AIP202
+% Khoa Công nghệ Thông tin
+% Trường Đại học Kiến trúc Đà Nẵng
+%
+% Biên dịch: latexmk -xelatex do-an.tex
+% =====================================================================
+
+% =====================================================================
+% 1. KHAI BÁO LỚP TÀI LIỆU
+% =====================================================================
+
+\documentclass[12pt,a4paper,oneside]{book}
+
+% Hỗ trợ giữ tiêu đề cùng nội dung phía sau khi sang trang
+\usepackage{needspace}
+\usepackage{longtable}
+% =====================================================================
+% 2. KHAI BÁO CÁC GÓI VÀ THƯ VIỆN
+% =====================================================================
+
+% Cấu hình tài liệu và toàn bộ gói dùng chung
+\input{styles/settings}
+
+% Hỗ trợ chèn ảnh và cố định vị trí hình
+\usepackage{graphicx}
+\usepackage{float}
+
+% Nạp các lệnh vẽ sơ đồ sau khi TikZ và thư viện đã được khai báo
+\input{styles/so_do_tikz}
+
+% =====================================================================
+% 3. THÔNG TIN ĐỒ ÁN
+% =====================================================================
+
+% Tên báo cáo
+\crname{BÁO CÁO ĐỒ ÁN TRÍ TUỆ NHÂN TẠO}
+
+% Tên đề tài
+\ctname{
+	XÂY DỰNG HỆ THỐNG ĐỌC NHÃN MÁC\\
+	VÀ CẢNH BÁO THÀNH PHẦN DỊ ỨNG THỰC PHẨM
+}
+
+% Hai sinh viên thực hiện
+\cstuname{
+	Nguyễn Thị Ngọc Ánh\\
+	Huỳnh Đức Bảo
+}
+
+% Mã số sinh viên
+\cmssv{
+	2351220148\\
+	2351220048
+}
+
+% Lớp
+\clopsv{23CT3}
+
+% Hội đồng
+\csCouncil{Công nghệ thông tin}
+
+% Giảng viên hướng dẫn
+\csSupervise{TS. Đỗ Phúc Hảo}
+
+% Năm học
+\cttime{2026--2027}
+
+% Khoa
+\csdeptname{KHOA CÔNG NGHỆ THÔNG TIN}
+
+% Địa điểm
+\csplace{Đà Nẵng}
+
+% =====================================================================
+% 4. BẮT ĐẦU TÀI LIỆU
+% =====================================================================
+
+\begin{document}
+	
+	% =====================================================================
+	% 5. TRANG BÌA
+	% =====================================================================
+	
+	\coverpage
+	
+	% =====================================================================
+	% 6. PHẦN ĐẦU BÁO CÁO
+	% =====================================================================
+	
+	\frontmatter
+	
+	% Thiết lập kiểu trang
+	\dauPageStyle
+	
+	% Lời cam đoan
+	\input{chuong/00-loi-cam-doan}
+	
+	% Lời cảm ơn
+	\input{chuong/00-loi-cam-on}
+	
+	% Tóm tắt đồ án
+	\input{chuong/00-tom-tat}
+	
+	% =====================================================================
+	% 7. DANH MỤC
+	% =====================================================================
+	
+	% Mục lục
+	\tableofcontents
+	
+	% Danh mục hình ảnh
+	\listoffigures
+	
+	% Danh mục bảng
+	\listoftables
+	
+	% Đồ án không trình bày thuật toán độc lập dạng thuật toán giả mã,
+	% vì vậy không tạo Danh mục thuật toán.
+	
+	% =====================================================================
+	% 8. NỘI DUNG CHÍNH CỦA BÁO CÁO
+	% =====================================================================
+	
+	\mainmatter
+	
+	% Thiết lập kiểu trang cho nội dung chính
+	\dauPageStyle
+	
+	% CHƯƠNG 1: MỞ ĐẦU
+	\input{chuong/01-mo-dau}
+	
+	% CHƯƠNG 2: CƠ SỞ LÝ THUYẾT
+	\input{chuong/02-co-so-ly-thuyet}
+	
+	% CHƯƠNG 3: PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG
+	\input{chuong/03-phan-tich-thiet-ke}
+	
+	% CHƯƠNG 4: CÀI ĐẶT HỆ THỐNG
+	\input{chuong/04-cai-dat}
+	
+	% CHƯƠNG 5: KẾT QUẢ VÀ ĐÁNH GIÁ
+	\input{chuong/05-ket-qua-danh-gia}
+	
+	% CHƯƠNG 6: KẾT LUẬN
+	\input{chuong/06-ket-luan}
+	
+	% =====================================================================
+	% 9. TÀI LIỆU THAM KHẢO
+	% =====================================================================
+	
+	\backmatter
+	
+	\cleardoublepage
+	\phantomsection
+	\addcontentsline{toc}{chapter}{Tài liệu tham khảo}
+	
+	\begin{thebibliography}{99}
+		
+		% -------------------------------------------------
+		% Tài liệu về dị ứng và nhãn thực phẩm
+		% -------------------------------------------------
+		
+		\bibitem{codex}
+		FAO/WHO Codex Alimentarius Commission,
+		\textit{General Standard for the Labelling of Pre-packaged Foods
+			(CXS 1-1985)}, 2024.
+		\\
+		\url{https://www.fao.org/fao-who-codexalimentarius/sh-proxy/en/?lnk=1&url=https\%253A\%252F\%252Fworkspace.fao.org\%252Fsites\%252Fcodex\%252FStandards\%252FCXS\%2B1-1985\%252FCXS_001e.pdf}
+		
+		\bibitem{fda}
+		U.S. Food and Drug Administration (FDA),
+		\textit{Food Allergies}.
+		\\
+		\url{https://www.fda.gov/food/nutrition-food-labeling-and-critical-foods/food-allergies}
+		
+		% -------------------------------------------------
+		% Ngôn ngữ lập trình và xử lý dữ liệu
+		% -------------------------------------------------
+		
+		\bibitem{python}
+		Python Software Foundation,
+		\textit{Python 3 Documentation}.
+		\\
+		\url{https://docs.python.org/3/}
+		
+		\bibitem{pythonstring}
+		Python Software Foundation,
+		\textit{String Methods}.
+		\\
+		\url{https://docs.python.org/3/library/stdtypes.html#string-methods}
+		
+		\bibitem{pythonregex}
+		Python Software Foundation,
+		\textit{Regular Expression Operations -- re}.
+		\\
+		\url{https://docs.python.org/3/library/re.html}
+		
+		% -------------------------------------------------
+		% Framework và cơ sở dữ liệu
+		% -------------------------------------------------
+		
+		\bibitem{flask}
+		Pallets Projects,
+		\textit{Flask Documentation -- Quickstart}.
+		\\
+		\url{https://flask.palletsprojects.com/en/stable/quickstart/}
+		
+		\bibitem{sqlalchemy}
+		SQLAlchemy,
+		\textit{MySQL and MariaDB Dialect Documentation}.
+		\\
+		\url{https://docs.sqlalchemy.org/en/21/dialects/mysql.html}
+		
+		\bibitem{tidb}
+		PingCAP,
+		\textit{Connect to TiDB with SQLAlchemy}.
+		\\
+		\url{https://docs.pingcap.com/developer/dev-guide-sample-application-python-sqlalchemy/}
+		
+		% -------------------------------------------------
+		% Dịch vụ AI và lưu trữ hình ảnh
+		% -------------------------------------------------
+		
+		\bibitem{gemini}
+		Google AI for Developers,
+		\textit{Gemini API -- Image Understanding}.
+		\\
+		\url{https://ai.google.dev/gemini-api/docs/image-understanding}
+		
+		\bibitem{cloudinary}
+		Cloudinary,
+		\textit{Python Image and Video Upload Documentation}.
+		\\
+		\url{https://cloudinary.com/documentation/python_image_and_video_upload}
+		
+		% -------------------------------------------------
+		% Nguồn dữ liệu sản phẩm
+		% -------------------------------------------------
+		
+		\bibitem{off}
+		Open Food Facts,
+		\textit{Open Food Facts API Documentation}.
+		\\
+		\url{https://github.com/openfoodfacts/openfoodfacts-server/blob/main/docs/api/index.md}
+		
+		% -------------------------------------------------
+		% Triển khai hệ thống
+		% -------------------------------------------------
+		
+		\bibitem{render}
+		Render,
+		\textit{Deploy a Flask App on Render}.
+		\\
+		\url{https://render.com/docs/deploy-flask}
+		
+	\end{thebibliography}
+	
+	% =====================================================================
+	% PHỤ LỤC
+	% =====================================================================
+	
+	% Nếu có nội dung phụ lục, bỏ dấu % ở dòng dưới:
+	% \input{chuong/07-phu-luc}
+	
+	% =====================================================================
+	% KẾT THÚC TÀI LIỆU
+	% =====================================================================
+	
+\end{document}

@@ -1,0 +1,334 @@
+% LƯU Ý: Thêm \usepackage{needspace} vào phần khai báo gói
+% trong file do-an.tex, trước \begin{document}.
+	% File này dùng gói enumitem (đã có sẵn trong settings hoặc do-an.tex).
+	
+	% ---------------------------------------------------------------------
+	% CHƯƠNG 2 — CƠ SỞ LÝ THUYẾT VÀ CÔNG NGHỆ
+	% ---------------------------------------------------------------------
+	
+	\chapter{Cơ sở lý thuyết và công nghệ}
+	\label{ch:cosolythuyet}
+	
+	% Cấu hình danh sách gạch đầu dòng: thụt vào, dòng đầu thẳng hàng với các dòng sau
+	\setlist[itemize,1]{
+		label=--,
+		leftmargin=1.5cm,
+		labelsep=0.5em,
+		itemindent=0pt,
+		listparindent=0pt,
+		parsep=0pt,
+		itemsep=4pt,
+		topsep=4pt
+	}
+	
+	% ---------------------------------------------------------------------
+	% 2.1. KIẾN THỨC NỀN TẢNG
+	% ---------------------------------------------------------------------
+	
+	\Needspace{4\baselineskip}
+	\section{Kiến thức nền tảng}
+	
+	\Needspace{3\baselineskip}
+	\subsection{Dị ứng thực phẩm và thành phần gây dị ứng}
+	
+	Dị ứng thực phẩm là phản ứng của hệ miễn dịch đối với một hoặc nhiều
+	thành phần có trong thực phẩm. Tùy thuộc vào cơ địa và mức độ nhạy cảm
+	của từng người, phản ứng dị ứng có thể biểu hiện ở nhiều mức độ khác
+	nhau. Một số trường hợp có thể xuất hiện các triệu chứng như ngứa,
+	phát ban, sưng môi, khó thở hoặc những phản ứng nghiêm trọng hơn.
+	
+	Trong quá trình lựa chọn thực phẩm, việc kiểm tra thành phần và thông
+	tin cảnh báo trên bao bì có ý nghĩa quan trọng đối với người có tiền
+	sử dị ứng. Tuy nhiên, thông tin về dị nguyên không phải lúc nào cũng
+	được trình bày dưới cùng một cách diễn đạt. Một chất có thể xuất hiện
+	dưới tên nguyên liệu, tên khoa học hoặc tên gọi thông dụng khác nhau.
+	
+	Đối với hệ thống Allergy Warning, dị nguyên được xem xét thông qua
+	hai nguồn thông tin chính:
+	
+	\begin{itemize}
+		\item Danh sách thành phần: Các nguyên liệu được ghi trên nhãn sản phẩm. Hệ thống phân tích nội dung này để nhận diện những thành phần có khả năng liên quan đến dị ứng.
+		\item Thông tin cảnh báo riêng trên nhãn: Các nội dung do nhà sản xuất công bố, chẳng hạn như ``Contains'' (Chứa) hoặc ``May contain'' (Có thể chứa). Đây là thông tin cảnh báo được trình bày riêng trên bao bì sản phẩm.
+	\end{itemize}
+	
+	Hai nguồn thông tin trên có ý nghĩa khác nhau. Một chất có thể xuất
+	hiện trong danh sách thành phần nhưng không được trình bày lại trong
+	mục cảnh báo riêng của nhà sản xuất. Vì vậy, không thể chỉ dựa vào
+	mục cảnh báo riêng để kết luận sản phẩm không chứa chất gây dị ứng.
+	
+	Trong phạm vi đồ án, hệ thống sử dụng thông tin thành phần và dữ liệu
+	dị nguyên để phân tích sản phẩm. Kết quả được đối chiếu với hồ sơ dị
+	ứng mà người dùng đã khai báo nhằm xác định những thành phần cần
+	được chú ý.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Nhãn thành phần thực phẩm và thông tin cảnh báo dị nguyên}
+	
+	Nhãn thực phẩm là nguồn cung cấp thông tin về tên sản phẩm, thương
+	hiệu, thành phần nguyên liệu và các nội dung cảnh báo liên quan.
+	Thông tin này thường được trình bày dưới dạng văn bản trên bao bì.
+	
+	Trong quá trình phân tích nhãn, cần phân biệt một số loại thông tin:
+	\begin{itemize}
+		\item Thành phần nguyên liệu: Liệt kê các chất được sử dụng để sản xuất thực phẩm, ví dụ như bột mì, sữa, dầu thực vật hoặc các loại hạt.
+		\item Dị nguyên khai báo riêng: Những chất được nhà sản xuất ghi rõ trong phần cảnh báo dị nguyên trên bao bì.
+		\item Cảnh báo có thể chứa vết: Thông tin cảnh báo về khả năng sản phẩm có thể chứa một lượng nhỏ chất gây dị ứng do quá trình sản xuất hoặc đóng gói.
+	\end{itemize}
+
+	Việc phân biệt các loại thông tin này giúp hạn chế nhầm lẫn giữa
+	thành phần thực tế được liệt kê và nội dung cảnh báo do nhà sản xuất
+	công bố.
+	
+	Đối với Allergy Warning, nội dung trên nhãn được sử dụng làm dữ liệu
+	đầu vào cho quá trình nhận dạng và phân tích. Hệ thống cố gắng giữ
+	riêng thông tin thành phần, dị nguyên được khai báo và cảnh báo có
+	thể chứa vết để kết quả hiển thị rõ ràng hơn.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Nhận dạng và trích xuất văn bản từ hình ảnh}
+	
+	Nhận dạng ký tự quang học (Optical Character Recognition -- OCR)
+	là công nghệ cho phép chuyển đổi chữ viết xuất hiện trong hình ảnh
+	thành dữ liệu văn bản có thể xử lý bằng máy tính. Công nghệ này
+	được ứng dụng trong việc số hóa tài liệu, nhận dạng thông tin trên
+	hóa đơn và trích xuất nội dung từ hình ảnh chứa văn bản.
+	
+	Đối với bài toán đọc nhãn thực phẩm, quá trình nhận dạng văn bản
+	giúp chuyển nội dung được in trên bao bì thành dữ liệu phục vụ
+	phân tích. Văn bản sau khi trích xuất có thể chứa tên sản phẩm,
+	danh sách thành phần và các thông tin cảnh báo dị nguyên.
+	
+	Trong đồ án, hệ thống sử dụng Gemini API để hỗ trợ đọc và trích
+	xuất thông tin từ hình ảnh nhãn thực phẩm. Thay vì chỉ nhận dạng
+	các ký tự riêng lẻ, mô hình AI còn hỗ trợ phân tích nội dung và
+	trả về những thông tin có cấu trúc để hệ thống tiếp tục xử lý.
+	
+	Quá trình xử lý hình ảnh và trích xuất thông tin có thể được mô tả
+	qua các bước:
+	
+	\begin{itemize}
+		\item Tiếp nhận hình ảnh nhãn thực phẩm do người dùng tải lên.
+		\item Kiểm tra hình ảnh đầu vào và chuẩn bị dữ liệu để xử lý.
+		\item Gửi hình ảnh đến dịch vụ Gemini API.
+		\item Nhận nội dung văn bản và thông tin sản phẩm được trích xuất.
+		\item Kiểm tra dữ liệu trả về và chuyển sang bước phân tích thành phần.
+	\end{itemize}
+	
+	Chất lượng hình ảnh có ảnh hưởng trực tiếp đến kết quả nhận dạng.
+	Ảnh bị mờ, thiếu sáng, nghiêng hoặc có kích thước chữ quá nhỏ có
+	thể khiến mô hình đọc sai hoặc bỏ sót một số thông tin. Ngoài ra,
+	cách bố trí nội dung trên bao bì và ngôn ngữ sử dụng cũng có thể
+	ảnh hưởng đến kết quả phân tích.
+	
+	Do đó, kết quả trích xuất cần được kiểm tra trước khi sử dụng trong
+	các bước đối chiếu và tạo cảnh báo.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Tiền xử lý và chuẩn hóa văn bản}
+	
+	Sau khi trích xuất nội dung từ hình ảnh, dữ liệu văn bản có thể
+	chứa khoảng trắng không cần thiết, cách viết hoa và viết thường
+	không đồng nhất hoặc những cách diễn đạt khác nhau của cùng một
+	thành phần. Vì vậy, tiền xử lý và chuẩn hóa văn bản là bước cần
+	thiết để hỗ trợ quá trình phân tích.
+	
+	Trong hệ thống Allergy Warning, quá trình chuẩn hóa có thể bao gồm:
+	
+	\begin{itemize}
+		\item Loại bỏ khoảng trắng dư thừa và chuẩn hóa định dạng văn bản.
+		\item Chuẩn hóa chữ hoa và chữ thường khi thực hiện so sánh.
+		\item Tách nội dung danh sách thành phần thành các nguyên liệu riêng biệt khi dữ liệu đầu vào cho phép.
+		\item Chuẩn hóa cách biểu diễn tên thành phần để hỗ trợ việc đối chiếu với dữ liệu dị nguyên.
+		\item Giữ lại nội dung gốc để phục vụ việc kiểm tra và hiển thị thông tin cho người dùng.
+	\end{itemize}
+	
+	Ví dụ, một thành phần có thể được biểu diễn dưới dạng
+	``Whey Powder (Milk)'' hoặc ``whey powder (milk)''. Khi thực hiện
+	so sánh, hệ thống có thể chuẩn hóa chữ hoa và chữ thường để hạn chế
+	việc bỏ sót do khác biệt về định dạng.
+	
+	Bên cạnh đó, một số nguyên liệu có thể được gọi bằng nhiều tên
+	khác nhau. Vì vậy, quá trình chuẩn hóa cần kết hợp với dữ liệu
+	từ khóa hoặc thông tin ánh xạ để hỗ trợ nhận diện thành phần.
+	
+	Việc chuẩn hóa không đồng nghĩa với việc tự động kết luận một
+	nguyên liệu là chất gây dị ứng. Đây là bước chuẩn bị dữ liệu để
+	các chức năng phân tích và đối chiếu được thực hiện nhất quán hơn.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Phân tích thành phần và đối chiếu dữ liệu dị nguyên}
+	
+	Đối chiếu dữ liệu là quá trình so sánh thông tin được trích xuất
+	từ nhãn thực phẩm với danh sách dữ liệu dị nguyên đã được lưu trữ.
+	Đây là một trong những bước quan trọng của hệ thống Allergy Warning.
+	
+	Hệ thống sử dụng dữ liệu dị nguyên làm cơ sở tham chiếu để xác
+	định những thành phần có khả năng liên quan đến dị ứng. Quá trình
+	đối chiếu được thực hiện thông qua các bước cơ bản:
+	
+	\begin{itemize}
+		\item Tiếp nhận danh sách thành phần đã được trích xuất.
+		\item Chuẩn hóa nội dung và xác định các tên nguyên liệu.
+		\item Đối chiếu tên thành phần với dữ liệu dị nguyên.
+		\item Xác định nhóm dị nguyên tương ứng với thành phần được nhận diện.
+		\item Tổng hợp kết quả và chuyển sang bước so sánh với hồ sơ dị ứng của người dùng.
+	\end{itemize}
+	
+	Một thành phần có thể được biểu diễn bằng nhiều tên gọi khác nhau.
+	Ví dụ, thông tin ``whey powder (milk)'' có thể được nhận diện là
+	thành phần liên quan đến sữa. Vì vậy, hệ thống cần xem xét cả tên
+	thành phần và các thông tin liên quan thay vì chỉ tìm kiếm một
+	từ khóa duy nhất.
+	
+	Sau khi nhận diện thành phần, hệ thống tiếp tục đối chiếu kết quả
+	với hồ sơ dị ứng của người dùng. Nếu dị nguyên được phát hiện
+	trùng với dị nguyên mà người dùng đã khai báo, hệ thống hiển thị
+	cảnh báo tương ứng.
+	
+	Cần phân biệt giữa hai kết quả:
+	
+	\begin{itemize}
+		\item Dị nguyên được nhận diện trong sản phẩm: Những nhóm chất có khả năng gây dị ứng được hệ thống xác định từ nội dung thành phần hoặc dữ liệu phân tích.
+		\item Dị nguyên trùng với hồ sơ người dùng: Những dị nguyên được nhận diện trong sản phẩm đồng thời nằm trong danh sách dị ứng mà người dùng đã khai báo.
+	\end{itemize}
+	
+	Phương pháp đối chiếu giúp kết quả cảnh báo có căn cứ từ dữ liệu
+	được lưu trữ. Tuy nhiên, độ chính xác vẫn phụ thuộc vào chất lượng
+	ảnh, nội dung trích xuất, mức độ đầy đủ của dữ liệu dị nguyên và
+	cách biểu diễn tên nguyên liệu.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Ứng dụng trí tuệ nhân tạo trong phân tích nhãn thực phẩm}
+	
+	Trí tuệ nhân tạo (Artificial Intelligence -- AI) là lĩnh vực
+	nghiên cứu các phương pháp giúp máy tính thực hiện những nhiệm vụ
+	đòi hỏi khả năng phân tích và xử lý thông tin. Trong đồ án
+	Allergy Warning, AI được sử dụng để hỗ trợ đọc hình ảnh nhãn
+	thực phẩm và phân tích nội dung thành phần.
+	
+	Hệ thống tích hợp Gemini API để gửi hình ảnh và yêu cầu mô hình
+	trích xuất thông tin cần thiết. Kết quả trả về được sử dụng để
+	xác định tên sản phẩm, thương hiệu, danh sách thành phần và các
+	thông tin cảnh báo dị nguyên khi nội dung trên nhãn cho phép
+	nhận diện.
+	
+	AI có thể hỗ trợ xử lý những trường hợp văn bản có cách diễn đạt
+	khác nhau hoặc nội dung được trình bày không đồng nhất. Tuy nhiên,
+	kết quả do mô hình tạo ra vẫn có thể chứa thông tin thiếu chính
+	xác, bỏ sót thành phần hoặc diễn giải chưa phù hợp với nội dung
+	thực tế trên bao bì.
+	
+	Vì vậy, trong hệ thống cần phân biệt giữa kết quả AI trích xuất
+	và kết quả đối chiếu với dữ liệu dị nguyên đã lưu trữ. Hai bước
+	này có vai trò bổ trợ cho nhau:
+	
+	\begin{itemize}
+		\item Phân tích bằng AI: Hỗ trợ đọc hình ảnh, trích xuất và diễn giải thông tin trên nhãn thực phẩm.
+		\item Đối chiếu dữ liệu: Sử dụng danh sách dị nguyên đã được lưu trữ để kiểm tra các thành phần được nhận diện.
+		\item So sánh hồ sơ dị ứng: Kiểm tra những dị nguyên được phát hiện có trùng với thông tin người dùng đã khai báo hay không.
+	\end{itemize}
+	
+	Việc kết hợp AI với dữ liệu dị nguyên giúp hệ thống thực hiện
+	quá trình phân tích từ hình ảnh đến kết quả cảnh báo. Tuy nhiên,
+	AI không thay thế hoàn toàn việc kiểm tra thông tin trên bao bì
+	và không thể bảo đảm phát hiện tất cả các chất gây dị ứng.
+	
+	Do đó, kết quả của Allergy Warning chỉ có tính chất hỗ trợ
+	tham khảo. Người dùng cần kiểm tra lại thông tin trên sản phẩm
+	thực tế, đặc biệt trong trường hợp có tiền sử dị ứng nghiêm trọng.
+	
+	% ---------------------------------------------------------------------
+	% 2.2. CÔNG NGHỆ VÀ CÔNG CỤ SỬ DỤNG
+	% ---------------------------------------------------------------------
+	
+	\Needspace{4\baselineskip}
+	\section{Công nghệ và công cụ sử dụng}
+	
+	Để xây dựng hệ thống Allergy Warning, nhóm sử dụng các công nghệ
+	phục vụ việc phát triển ứng dụng web, xử lý hình ảnh, phân tích
+	thành phần, quản lý dữ liệu và lưu trữ hình ảnh trực tuyến.
+	
+	Các công nghệ được lựa chọn nhằm đáp ứng những chức năng chính
+	của hệ thống, bao gồm quản lý tài khoản, quản lý hồ sơ dị ứng,
+	quét nhãn thực phẩm, phân tích dị nguyên và lưu trữ lịch sử quét.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Ngôn ngữ lập trình Python}
+	
+	Python là ngôn ngữ lập trình bậc cao, có cú pháp tương đối dễ đọc
+	và hỗ trợ nhiều thư viện phục vụ phát triển ứng dụng web, xử lý
+	dữ liệu và tích hợp các dịch vụ bên ngoài.
+	
+	Trong đồ án, Python được sử dụng để xây dựng phần xử lý phía máy
+	chủ của hệ thống. Ngôn ngữ này đảm nhiệm việc tiếp nhận yêu cầu
+	từ giao diện, xử lý dữ liệu đầu vào, gọi dịch vụ AI, thực hiện
+	đối chiếu dị nguyên và kết nối cơ sở dữ liệu.
+	
+	Việc sử dụng Python giúp nhóm tổ chức các chức năng nghiệp vụ
+	thành những thành phần riêng biệt, thuận tiện cho quá trình
+	phát triển, kiểm thử và bảo trì hệ thống.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Framework Flask}
+	
+	Flask là một framework web được xây dựng trên nền tảng Python,
+	hỗ trợ phát triển ứng dụng web và xây dựng các tuyến xử lý
+	yêu cầu từ phía người dùng.
+	
+	Trong Allergy Warning, Flask được sử dụng để xây dựng máy chủ
+	ứng dụng và kết nối các chức năng của hệ thống. Khi người dùng
+	thực hiện một thao tác trên giao diện, yêu cầu được gửi đến
+	máy chủ Flask để xử lý và trả về kết quả phù hợp.
+	
+	Các nhiệm vụ chính của Flask trong hệ thống gồm:
+	
+	\begin{itemize}
+		\item Xử lý các yêu cầu đăng ký, đăng nhập và quản lý tài khoản.
+		\item Tiếp nhận hình ảnh nhãn thực phẩm do người dùng tải lên.
+		\item Gọi dịch vụ Gemini API để hỗ trợ phân tích hình ảnh.
+		\item Xử lý dữ liệu thành phần và đối chiếu dị nguyên.
+		\item Kết nối cơ sở dữ liệu để lưu trữ và truy xuất thông tin.
+		\item Trả kết quả phân tích và lịch sử quét về giao diện web.
+	\end{itemize}
+	
+	Flask đóng vai trò trung tâm trong việc điều phối các thành phần
+	xử lý của hệ thống, giúp các chức năng được kết nối thành một
+	quy trình thống nhất.
+	
+	\Needspace{3\baselineskip}
+	\subsection{Gemini API}
+	
+	Gemini API là giao diện lập trình ứng dụng cho phép hệ thống
+	tích hợp mô hình trí tuệ nhân tạo Gemini vào ứng dụng của mình.
+	Dịch vụ này hỗ trợ tiếp nhận dữ liệu và thực hiện các yêu cầu
+	phân tích theo nội dung được gửi đến.
+	
+	Trong đồ án, Gemini API được sử dụng để hỗ trợ đọc và phân tích
+	hình ảnh nhãn thực phẩm. Máy chủ gửi hình ảnh cùng yêu cầu xử lý
+	đến dịch vụ AI. Sau đó, hệ thống tiếp nhận kết quả và xử lý
+	thông tin trả về.
+	
+	Các nhiệm vụ chính của Gemini API trong hệ thống gồm:
+	
+	\begin{itemize}
+		\item Hỗ trợ nhận diện nội dung văn bản trên ảnh nhãn thực phẩm.
+		\item Trích xuất tên sản phẩm và thương hiệu khi có thông tin.
+		\item Trích xuất danh sách thành phần nguyên liệu.
+		\item Hỗ trợ nhận diện thông tin dị nguyên được khai báo riêng.
+		\item Hỗ trợ nhận diện nội dung cảnh báo có thể chứa vết.
+	\end{itemize}
+	
+	Dữ liệu do Gemini API trả về được máy chủ tiếp nhận và kiểm tra
+	trước khi sử dụng cho các bước phân tích tiếp theo. Việc sử dụng
+	dịch vụ AI giúp hệ thống xử lý hình ảnh nhãn thực phẩm mà không
+	phải xây dựng riêng một mô hình nhận dạng hình ảnh từ đầu.
+	
+	Tuy nhiên, kết quả phụ thuộc vào chất lượng hình ảnh, nội dung
+	yêu cầu gửi đến mô hình và khả năng xử lý của dịch vụ. Vì vậy,
+	hệ thống cần có bước kiểm tra dữ liệu trả về và không xem kết
+	quả AI là thông tin tuyệt đối chính xác.
+	
+	\Needspace{3\baselineskip}
+	\subsection{TiDB Cloud và cơ sở dữ liệu MySQL}
+	
+	Cơ sở dữ liệu là thành phần dùng để lưu trữ, quản

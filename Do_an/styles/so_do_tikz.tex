@@ -1,0 +1,208 @@
+% =========================================================
+% CAC SO DO TIKZ - ALLERGY WARNING
+% Nap file nay sau khi da nap goi tikz trong do-an.tex
+% =========================================================
+\tikzset{
+  awline/.style={draw=blue!55!black, line width=0.9pt, -{Stealth[length=2.2mm]}},
+  awdash/.style={draw=blue!55!black, line width=0.8pt, dashed, -{Stealth[length=2mm]}},
+  awactor/.style={draw=blue!60!black, line width=1pt, fill=blue!5, minimum width=19mm, minimum height=9mm, rounded corners=2pt, align=center, font=\small},
+  awuc/.style={draw=blue!60!black, line width=1pt, fill=blue!5, ellipse, minimum width=34mm, minimum height=12mm, align=center, font=\small},
+  awsub/.style={draw=violet!65!black, line width=0.9pt, fill=violet!7, ellipse, minimum width=35mm, minimum height=11mm, align=center, font=\small},
+  awbox/.style={draw=blue!60!black, line width=0.9pt, fill=blue!4, rounded corners=2pt, minimum width=30mm, minimum height=11mm, align=center, font=\small},
+  awdb/.style={draw=blue!60!black, line width=0.9pt, fill=cyan!5, rounded corners=2pt, minimum width=35mm, minimum height=12mm, align=center, font=\small},
+  awtitle/.style={font=\bfseries\small, text=blue!55!black},
+  awrel/.style={font=\scriptsize, fill=white, inner sep=1pt}
+}
+
+% 01. Use Case tong quat
+\newcommand{\AWUseCaseTongQuat}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[awactor] (u) at (0,0) {Người dùng};
+\foreach \i/\t in {1/Đăng ký tài khoản,2/Đăng nhập,3/Quản lý hồ sơ cá nhân,4/Quản lý hồ sơ dị ứng,5/Quét nhãn thực phẩm,6/Xem kết quả phân tích,7/Xem lịch sử quét,8/Tra cứu dữ liệu sản phẩm}{
+  \node[awuc] (c\i) at (5,-1.05*\i+4.7) {\t};
+  \draw[awline] (u.east) -- (c\i.west);
+}
+\end{tikzpicture}}
+
+% 02. Use Case tai khoan
+\newcommand{\AWUseCaseTaiKhoan}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[awactor] (u) at (0,0) {Người dùng};
+\node[awuc] (reg) at (4,1.6) {Đăng ký tài khoản};
+\node[awuc] (log) at (4,-1.2) {Đăng nhập};
+\node[awsub] (check) at (9,2.2) {Kiểm tra dữ liệu\\đăng ký};
+\node[awsub] (create) at (9,-0.2) {Tạo tài khoản};
+\node[awsub] (input) at (9,-1.7) {Nhập email và\\mật khẩu};
+\node[awsub] (auth) at (9,-3.2) {Xác thực thông tin};
+\draw[awline] (u.east) -- (reg.west);
+\draw[awline] (u.east) -- (log.west);
+\draw[awdash] (reg.east) -- node[awrel,above]{«include»} (check.west);
+\draw[awdash] (log.east) -- node[awrel,above]{«include»} (create.west);
+\draw[awdash] (log.east) -- node[awrel,above]{«include»} (input.west);
+\draw[awdash] (log.east) -- node[awrel,below]{«include»} (auth.west);
+\end{tikzpicture}}
+
+% 03. Use Case ho so
+\newcommand{\AWUseCaseHoSo}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[awactor] (u) at (0,0) {Người dùng};
+\node[awuc] (profile) at (4,1.4) {Xem hồ sơ cá nhân};
+\node[awuc] (allergy) at (4,-1.5) {Quản lý hồ sơ dị ứng};
+\node[awsub] (info) at (9,2.4) {Xem thông tin\\tài khoản};
+\node[awsub] (list) at (9,-0.2) {Xem danh sách\\dị nguyên};
+\node[awsub] (choose) at (9,-1.8) {Chọn dị nguyên\\quan tâm};
+\node[awsub] (save) at (9,-3.4) {Lưu lựa chọn\\dị nguyên};
+\draw[awline] (u.east) -- (profile.west);
+\draw[awline] (u.east) -- (allergy.west);
+\draw[awdash] (profile.east) -- node[awrel,above]{«include»} (info.west);
+\draw[awdash] (allergy.east) -- node[awrel,above]{«include»} (list.west);
+\draw[awdash] (allergy.east) -- node[awrel,above]{«include»} (choose.west);
+\draw[awdash] (allergy.east) -- node[awrel,below]{«include»} (save.west);
+\end{tikzpicture}}
+
+% 04. Use Case quet nhan
+% Ban toi gian: khong dung macro toan hoc trong node
+\newcommand{\AWUseCaseQuetNhan}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[awactor] (u) at (0,0) {Người dùng};
+\node[awuc,minimum width=40mm,minimum height=16mm,fill=blue!12,font=\bfseries\small]
+    (scan) at (4,0) {Quét nhãn\\thực phẩm};
+\node[awsub] (upload) at (10.5,3.1) {Tải ảnh nhãn\\thực phẩm};
+\node[awsub] (valid) at (10.5,1.9) {Kiểm tra\\ảnh đầu vào};
+\node[awsub] (ocr) at (10.5,0.7) {OCR đọc và\\trích xuất nhãn};
+\node[awsub] (norm) at (10.5,-0.5) {Chuẩn hóa\\thành phần};
+\node[awsub] (match) at (10.5,-1.7) {Đối chiếu\\dữ liệu dị nguyên};
+\node[awsub] (warn) at (10.5,-2.9) {Phân loại và\\tổng hợp cảnh báo};
+\draw[awline] (u.east) -- (scan.west);
+\draw[awdash] (scan.east) -- (upload.west);
+\draw[awdash] (scan.east) -- (valid.west);
+\draw[awdash] (scan.east) -- (ocr.west);
+\draw[awdash] (scan.east) -- (norm.west);
+\draw[awdash] (scan.east) -- (match.west);
+\draw[awdash] (scan.east) -- (warn.west);
+\node[font=\scriptsize,fill=white,inner sep=1pt] at (7.25,0.05) {include};
+\end{tikzpicture}}
+
+% 05. Use Case ket qua va lich su
+\newcommand{\AWUseCaseKetQua}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\node[awactor] (u) at (0,0) {Người dùng};
+\node[awuc] (result) at (4,1.5) {Xem kết quả\\phân tích};
+\node[awuc] (history) at (4,-1.6) {Xem lịch sử quét};
+\node[awsub] (product) at (9,2.4) {Xem thông tin\\sản phẩm};
+\node[awsub] (ingredient) at (9,0.9) {Xem thành phần\\và bằng chứng};
+\node[awsub] (status) at (9,-0.9) {Xem trạng thái\\cảnh báo};
+\node[awsub] (detail) at (9,-2.4) {Xem chi tiết\\lần quét};
+\draw[awline] (u.east) -- (result.west);
+\draw[awline] (u.east) -- (history.west);
+\draw[awdash] (result.east) -- node[awrel,above]{«include»} (product.west);
+\draw[awdash] (result.east) -- node[awrel,below]{«include»} (ingredient.west);
+\draw[awdash] (history.east) -- node[awrel,above]{«include»} (status.west);
+\draw[awdash] (history.east) -- node[awrel,below]{«include»} (detail.west);
+\end{tikzpicture}}
+
+% 06. Kien truc tong the
+\newcommand{\AWKienTrucTongThe}{%
+\begin{tikzpicture}[scale=0.72,transform shape,node distance=7mm and 9mm]
+\node[awbox,minimum width=14cm,minimum height=12mm] (browser) {\textbf{Người dùng / Trình duyệt}\\Truy cập website, đăng nhập, tải ảnh, xem kết quả và lịch sử quét};
+\node[awbox,below=of browser,minimum width=14cm,minimum height=15mm] (render) {\textbf{RENDER -- Nền tảng triển khai ứng dụng}\\Giao diện Website (Frontend: HTML, CSS, JavaScript) \quad | \quad Ứng dụng máy chủ (Backend: Flask/Python)};
+\node[awdb,below left=12mm and 5mm of render,minimum width=4.1cm,minimum height=24mm] (db) {\textbf{TiDB Cloud}\\MySQL-compatible Database\\Tài khoản, hồ sơ dị ứng, sản phẩm, lịch sử quét};
+\node[awdb,below=12mm of render,minimum width=4.1cm,minimum height=24mm] (cloud) {\textbf{Cloudinary}\\Lưu trữ ảnh nhãn\\Quản lý và cung cấp URL ảnh};
+\node[awdb,below right=12mm and 5mm of render,minimum width=4.1cm,minimum height=24mm] (gem) {\textbf{Gemini API}\\Phân tích ảnh và trích xuất\\tên sản phẩm, thành phần, dị nguyên};
+\draw[awline] (browser) -- node[right,font=\scriptsize]{HTTPS} (render);
+\draw[awline] (render.south west) |- (db.north);
+\draw[awline] (render.south) -- node[right,font=\scriptsize]{Tải ảnh / URL} (cloud.north);
+\draw[awline] (render.south east) |- (gem.north);
+\end{tikzpicture}}
+
+% 07. Kien truc xu ly anh
+\newcommand{\AWKienTrucXuLy}{%
+\begin{tikzpicture}[scale=0.78,transform shape,node distance=8mm and 5mm]
+\node[awbox,minimum width=2.5cm,minimum height=18mm] (a) {Ảnh nhãn\\thực phẩm};
+\node[awbox,right=of a,minimum width=2.7cm,minimum height=18mm] (b) {Kiểm tra và\\tiền xử lý ảnh};
+\node[awbox,right=of b,minimum width=2.4cm,minimum height=18mm] (c) {OCR\\đọc văn bản};
+\node[awbox,right=of c,minimum width=2.8cm,minimum height=18mm] (d) {Chuẩn hóa và\\phân tích ngôn ngữ};
+\node[awbox,right=of d,minimum width=2.5cm,minimum height=18mm] (e) {Đối chiếu\\dị nguyên};
+\node[awbox,right=of e,minimum width=2.5cm,minimum height=18mm] (f) {Tổng hợp\\cảnh báo};
+\foreach \x/\y in {a/b,b/c,c/d,d/e,e/f} \draw[awline] (\x) -- (\y);
+\node[awdb,below=18mm of d,minimum width=4.5cm] (db) {Cơ sở dữ liệu sản phẩm\\và dị nguyên};
+\node[awdb,right=18mm of db,minimum width=4.5cm] (hist) {Lưu lịch sử quét\\và hiển thị kết quả};
+\draw[awdash] (e.south) |- (db.north);
+\draw[awline] (f.south) |- (hist.north);
+\draw[awdash] (db.east) -- (hist.west);
+\end{tikzpicture}}
+
+% 08. Activity quet nhan
+\newcommand{\AWActivityQuetNhan}{%
+\begin{tikzpicture}[node distance=5mm]
+\node[circle,fill=green!25,draw=green!50!black,minimum size=7mm] (start) {};
+\node[awbox,below=of start,minimum width=7cm] (open) {Mở chức năng quét nhãn};
+\node[awbox,below=of open,minimum width=7cm] (select) {Chọn ảnh nhãn thực phẩm};
+\node[awbox,below=of select,minimum width=7cm] (check) {Kiểm tra ảnh đầu vào};
+\node[diamond,draw=orange!70!black,fill=yellow!15,aspect=2,below=of check,inner sep=2pt,align=center] (valid) {Ảnh hợp lệ?};
+\node[awbox,left=20mm of valid,minimum width=3.2cm,fill=red!5] (bad) {Thông báo ảnh\\không hợp lệ};
+\node[awbox,below=of valid,minimum width=7cm] (upload) {Tải ảnh lên Cloudinary và nhận URL};
+\node[awbox,below=of upload,minimum width=7cm] (gem) {Gọi Gemini phân tích ảnh và trích xuất thông tin};
+\node[diamond,draw=orange!70!black,fill=yellow!15,aspect=2,below=of gem,inner sep=2pt,align=center] (enough) {Đủ nội dung?};
+\node[awbox,left=20mm of enough,minimum width=3.2cm,fill=red!5] (retry) {Thông báo chưa\\đủ dữ liệu};
+\node[awbox,below=of enough,minimum width=7cm] (norm) {Chuẩn hóa và phân tích thành phần};
+\node[awbox,below=of norm,minimum width=7cm] (match) {Đối chiếu dị nguyên với hồ sơ người dùng};
+\node[awbox,below=of match,minimum width=7cm] (warn) {Phân loại và tổng hợp cảnh báo};
+\node[awbox,below=of warn,minimum width=7cm] (save) {Lưu kết quả vào lịch sử quét};
+\node[awbox,below=of save,minimum width=7cm] (show) {Hiển thị kết quả cho người dùng};
+\node[circle,draw=red!60!black,fill=red!15,minimum size=7mm,below=of show] (end) {};
+\draw[awline] (start) -- (open);
+\draw[awline] (open) -- (select);
+\draw[awline] (select) -- (check);
+\draw[awline] (check) -- (valid);
+\draw[awline] (valid) -- node[right,font=\scriptsize]{Có} (upload);
+\draw[awline] (valid.west) -- node[above,font=\scriptsize]{Không} (bad.east);
+\draw[awline] (bad.north) |- (select.west);
+\draw[awline] (upload) -- (gem);
+\draw[awline] (gem) -- (enough);
+\draw[awline] (enough) -- node[right,font=\scriptsize]{Có} (norm);
+\draw[awline] (enough.west) -- node[above,font=\scriptsize]{Không} (retry.east);
+\draw[awline] (retry.north) |- (select.west);
+\draw[awline] (norm) -- (match);
+\draw[awline] (match) -- (warn);
+\draw[awline] (warn) -- (save);
+\draw[awline] (save) -- (show);
+\draw[awline] (show) -- (end);
+\end{tikzpicture}}
+
+% 09. Sequence quet nhan
+\newcommand{\AWSequenceQuetNhan}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+\foreach \x/\name in {0/Người dùng,3/Giao diện web,6/Ứng dụng\\máy chủ,9/OCR và\\phân tích,12/Cơ sở\\dữ liệu}{
+ \node[awbox,minimum width=2.3cm,minimum height=10mm] at (\x,0) {\name};
+ \draw[dashed,gray] (\x,-0.4) -- (\x,-9.3);
+}
+\draw[awline] (0,-1) -- node[above,font=\scriptsize]{Chọn và gửi ảnh} (3,-1);
+\draw[awline] (3,-2) -- node[above,font=\scriptsize]{Gửi yêu cầu quét} (6,-2);
+\draw[awline] (6,-3) -- node[above,font=\scriptsize]{Chuyển ảnh xử lý} (9,-3);
+\draw[awline] (9,-4) -- ++(0.5,0) -- ++(0,-.45) -- ++(-.5,0);
+\node[font=\scriptsize,anchor=west] at (9.6,-4.2) {OCR trích xuất và chuẩn hóa};
+\draw[awline] (9,-5) -- node[above,font=\scriptsize]{Yêu cầu dữ liệu dị nguyên} (12,-5);
+\draw[awdash] (12,-5.8) -- node[above,font=\scriptsize]{Trả dữ liệu đối chiếu} (9,-5.8);
+\draw[awdash] (9,-6.6) -- node[above,font=\scriptsize]{Trả kết quả phân tích} (6,-6.6);
+\draw[awline] (6,-7.4) -- node[above,font=\scriptsize]{Lưu thông tin lần quét} (12,-7.4);
+\draw[awdash] (12,-8.2) -- node[above,font=\scriptsize]{Xác nhận lưu} (6,-8.2);
+\draw[awdash] (6,-8.8) -- node[above,font=\scriptsize]{Trả kết quả} (3,-8.8);
+\draw[awdash] (3,-9.4) -- node[above,font=\scriptsize]{Hiển thị cảnh báo} (0,-9.4);
+\end{tikzpicture}}
+
+% 10. ERD
+\newcommand{\AWERD}{%
+\begin{tikzpicture}[node distance=12mm and 12mm]
+\node[awdb,minimum width=4cm,minimum height=27mm] (user) {\textbf{USER}\\PK id\\email, full\_name\\hashed\_password\\is\_active, created\_at};
+\node[awdb,right=of user,minimum width=4cm,minimum height=27mm] (ua) {\textbf{USER\_ALLERGENS}\\PK id\\FK user\_id\\FK allergen\_id\\created\_at};
+\node[awdb,right=of ua,minimum width=4cm,minimum height=27mm] (all) {\textbf{ALLERGENS}\\PK id\\name, description\\name\_en, off\_tag\\created\_at};
+\node[awdb,below=20mm of user,minimum width=4cm,minimum height=30mm] (prod) {\textbf{PRODUCTS}\\PK id\\barcode, name, brand\\ingredients\_text\\allergens\_text, image\_url};
+\node[awdb,right=of prod,minimum width=4cm,minimum height=30mm] (pi) {\textbf{PRODUCT\_INGREDIENTS}\\PK id\\FK product\_id\\name, name\_en, off\_tag};
+\node[awdb,right=of pi,minimum width=4.2cm,minimum height=30mm] (hist) {\textbf{SCAN\_HISTORY}\\PK id\\FK user\_id, product\_id\\scan\_id, product\_name\\ingredients/allergens/warnings\\warning\_status, scanned\_at};
+\draw[awline] (user.east) -- node[awrel,above]{1:N} (ua.west);
+\draw[awline] (ua.east) -- node[awrel,above]{N:1} (all.west);
+\draw[awline] (prod.east) -- node[awrel,above]{1:N} (pi.west);
+\draw[awline] (pi.east) -- node[awrel,above]{1:N} (hist.west);
+\draw[awline] (user.south) -- ++(0,-.7) -| node[pos=.25,below,awrel]{1:N} (hist.south);
+\end{tikzpicture}}

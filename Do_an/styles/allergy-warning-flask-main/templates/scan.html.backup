@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+Quét nhãn - Allergy Warning
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container">
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+        <div class="logo">
+
+            <h1>
+                Allergy Warning
+            </h1>
+
+            <p>
+                Đọc nhãn và cảnh báo dị ứng
+            </p>
+
+        </div>
+
+
+        <nav class="navbar">
+
+            <a href="{{ url_for('main.dashboard') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('auth.logout') }}">
+                Đăng xuất
+            </a>
+
+        </nav>
+
+    </header>
+
+
+    <!-- SCAN -->
+
+    <main class="scan-container">
+
+        <div class="scan-card">
+
+            <h2>
+                📷 Quét nhãn thực phẩm
+            </h2>
+
+            <p>
+                Tải lên ảnh nhãn sản phẩm
+                để hệ thống phân tích thành phần.
+            </p>
+
+
+            <form
+                id="upload-form"
+                method="POST"
+                action="{{ url_for('scan.process_scan') }}"
+                enctype="multipart/form-data"
+            >
+
+
+                <div class="upload-area">
+
+                    <label for="image">
+
+                        Chọn ảnh nhãn sản phẩm
+
+                    </label>
+
+
+                    <input
+                        id="image"
+                        form="upload-form"
+                        type="file"
+                        name="image"
+                        accept=".jpg,.jpeg,.png,.webp"
+                        required
+                    >
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    form="upload-form"
+                    class="btn full-width"
+                >
+                    🔍 Phân tích nhãn
+                </button>
+
+            </form>
+
+
+            <div class="back-link">
+
+                <a
+                    href="{{ url_for('main.dashboard') }}"
+                >
+                    ← Quay lại Dashboard
+                </a>
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}

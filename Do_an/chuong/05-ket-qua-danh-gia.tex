@@ -1,0 +1,206 @@
+% =====================================================================
+% CHƯƠNG 5: KẾT QUẢ VÀ ĐÁNH GIÁ
+% ĐỀ TÀI: XÂY DỰNG HỆ THỐNG ĐỌC NHÃN MÁC VÀ CẢNH BÁO DỊ ỨNG THỰC PHẨM
+% =====================================================================
+
+\chapter{Kết quả và đánh giá}
+\label{ch:ketqua}
+
+\section{Kết quả đạt được}
+
+\subsection{Kết quả xây dựng hệ thống}
+
+Hệ thống Allergy Warning được xây dựng nhằm hỗ trợ người dùng đọc
+thông tin trên nhãn thực phẩm và nhận biết các thành phần liên quan
+đến dị ứng. Các chức năng chính gồm:
+
+\begin{itemize}
+	\item Đăng ký, đăng nhập và quản lý hồ sơ cá nhân.
+	\item Thiết lập hồ sơ dị ứng và lựa chọn các dị nguyên quan tâm.
+	\item Tải ảnh nhãn thực phẩm để thực hiện phân tích.
+	\item Sử dụng Gemini API để nhận diện và trích xuất thông tin trên nhãn.
+	\item Chuẩn hóa thành phần, đối chiếu với dữ liệu dị nguyên và hồ sơ người dùng.
+	\item Hiển thị cảnh báo, lưu và tra cứu lịch sử quét.
+\end{itemize}
+
+Hệ thống sử dụng Flask làm máy chủ, TiDB Cloud lưu trữ dữ liệu,
+Cloudinary lưu trữ hình ảnh và Gemini API hỗ trợ phân tích nhãn.
+Open Food Facts được sử dụng làm nguồn dữ liệu tham khảo; ứng dụng
+được triển khai trên Render.
+
+\subsection{Kết quả phân tích và cảnh báo}
+
+Quy trình phân tích gồm tiếp nhận ảnh, lưu ảnh trên Cloudinary,
+gửi ảnh đến Gemini API, chuẩn hóa thông tin và đối chiếu thành phần
+với dữ liệu dị nguyên. Kết quả được tổng hợp để hiển thị cho người dùng.
+
+Hệ thống phân biệt thành phần được liệt kê trên nhãn với cảnh báo
+về khả năng chứa vết dị nguyên. Đồng thời, hệ thống thể hiện riêng
+dị nguyên được nhận diện và dị nguyên trùng với hồ sơ cá nhân.
+Kết quả chỉ có tính chất tham khảo, không khẳng định sản phẩm an toàn
+tuyệt đối.
+
+\section{Đánh giá các chức năng}
+
+Việc đánh giá tập trung vào khả năng hoạt động và tính phù hợp của
+kết quả ở các chức năng chính.
+
+\subsection{Quản lý tài khoản và hồ sơ dị ứng}
+
+Kiểm tra khả năng đăng ký, đăng nhập, cập nhật hồ sơ và lưu lựa chọn
+dị nguyên. Dữ liệu hồ sơ và lịch sử quét cần được truy xuất đúng theo
+tài khoản đang đăng nhập.
+
+\subsection{Phân tích hình ảnh và nhận diện nội dung}
+
+Đối chiếu thông tin Gemini API trả về với nhãn gốc. Ảnh rõ, đủ sáng
+giúp quá trình nhận diện thuận lợi hơn; ảnh mờ, nghiêng hoặc có chữ
+nhỏ có thể làm thiếu hoặc sai thông tin.
+
+\subsection{Đối chiếu dị nguyên}
+
+Kiểm tra khả năng chuẩn hóa tên thành phần và phát hiện dị nguyên.
+Cần chú ý các tên gọi tương đương, những thành phần gần giống nhau
+và trường hợp dị nguyên được nhận diện nhưng không nằm trong hồ sơ
+dị ứng của người dùng.
+
+\subsection{Hiển thị kết quả và lịch sử quét}
+
+Kiểm tra việc hiển thị thông tin sản phẩm, thành phần và cảnh báo.
+Khi phân tích thất bại hoặc thiếu dữ liệu, hệ thống cần thông báo rõ.
+Lịch sử phải được lưu và truy xuất đúng tài khoản.
+
+\section{Phương pháp và tiêu chí đánh giá}
+
+\subsection{Phương pháp đánh giá}
+
+Sử dụng ảnh nhãn thực phẩm làm dữ liệu kiểm thử. Thông tin thành phần
+và cảnh báo trên nhãn gốc được ghi nhận để so sánh với kết quả hệ thống.
+Tập ảnh nên có nhiều tình huống như ảnh rõ, ảnh chữ nhỏ, ảnh nhiều
+thành phần và ảnh có cảnh báo về khả năng chứa vết dị nguyên.
+
+\subsection{Các tiêu chí đánh giá}
+
+Hệ thống được đánh giá dựa trên các tiêu chí liên quan đến khả năng
+phân tích nhãn thực phẩm, nhận diện thành phần và cảnh báo dị ứng.
+Cụ thể gồm:
+
+\begin{itemize}
+	\item \textbf{Khả năng trích xuất thông tin:}
+	Đánh giá mức độ đầy đủ và chính xác của thông tin được trích xuất
+	từ hình ảnh nhãn thực phẩm, bao gồm tên sản phẩm, thương hiệu,
+	thành phần và thông tin cảnh báo.
+	
+	\item \textbf{Khả năng nhận diện thành phần:}
+	Kiểm tra khả năng đọc và chuẩn hóa danh sách thành phần thực phẩm,
+	kể cả khi thông tin trên nhãn có cách viết hoặc cách diễn đạt khác nhau.
+	
+	\item \textbf{Khả năng phát hiện chất gây dị ứng:}
+	Đánh giá khả năng đối chiếu thành phần sản phẩm với danh mục
+	chất gây dị ứng và hồ sơ dị ứng của người dùng để xác định
+	các thành phần có nguy cơ gây dị ứng.
+	
+	\item \textbf{Khả năng đưa ra cảnh báo:}
+	Kiểm tra việc hiển thị đầy đủ các chất gây dị ứng được phát hiện,
+	đồng thời phân biệt thành phần có trong sản phẩm với cảnh báo
+	về khả năng chứa dấu vết chất gây dị ứng.
+	
+	\item \textbf{Khả năng xử lý các trường hợp đầu vào:}
+	Đánh giá khả năng xử lý hình ảnh rõ nét, hình ảnh mờ,
+	thiếu sáng, chứa nhiều thành phần hoặc không đủ thông tin
+	để phân tích.
+	
+	\item \textbf{Tính ổn định của hệ thống:}
+	Kiểm tra khả năng xử lý khi dịch vụ Gemini API gặp lỗi,
+	hình ảnh không tải lên được hoặc không thể truy xuất thông tin
+	sản phẩm, đồng thời đảm bảo hệ thống thông báo phù hợp
+	cho người dùng.
+\end{itemize}
+
+Các tiêu chí trên được sử dụng để xem xét mức độ đáp ứng yêu cầu
+của hệ thống. Kết quả đánh giá là cơ sở để xác định những ưu điểm,
+hạn chế và khả năng cải thiện trong quá trình phát triển ứng dụng.
+\subsection{Đánh giá định lượng}
+
+Khi có dữ liệu kiểm thử được đối chiếu, có thể sử dụng Precision,
+Recall và F1-score để đánh giá khả năng phát hiện dị nguyên:
+
+\[
+Precision = \frac{TP}{TP + FP}
+\]
+
+\[
+Recall = \frac{TP}{TP + FN}
+\]
+
+\[
+F1\text{-}score =
+2 \times \frac{Precision \times Recall}{Precision + Recall}
+\]
+
+Trong đó, TP là số trường hợp phát hiện đúng, FP là số trường hợp
+cảnh báo sai và FN là số trường hợp bỏ sót. Các chỉ số cần được tính
+từ kết quả kiểm thử thực tế.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Tổng hợp kết quả đánh giá định lượng}
+	\label{tab:ch5-ketqua-dinhluong}
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{4.2cm}|>{\centering\arraybackslash}X|}
+		\hline
+		\textbf{Chỉ số} & \textbf{Kết quả} \\ \hline
+		Tổng số ảnh kiểm thử & \textit{Điền số liệu thực tế} \\ \hline
+		TP, FP, FN & \textit{Điền số liệu thực tế} \\ \hline
+		Precision, Recall, F1-score & \textit{Tính từ dữ liệu kiểm thử} \\ \hline
+	\end{tabularx}
+\end{table}
+
+Nếu chưa có tập dữ liệu đủ tin cậy, cần trình bày đánh giá định tính
+và không tự ước lượng các chỉ số.
+
+\section{Bàn luận}
+
+Kết quả hệ thống chịu ảnh hưởng bởi ba yếu tố chính. Thứ nhất,
+chất lượng ảnh không tốt có thể khiến OCR và Gemini API nhận diện
+thiếu hoặc sai nội dung. Thứ hai, dữ liệu dị nguyên và quy tắc chuẩn
+hóa chưa đầy đủ có thể dẫn đến bỏ sót hoặc đối chiếu nhầm thành phần.
+Thứ ba, Gemini API và các dịch vụ bên ngoài có thể gặp lỗi kết nối
+hoặc trả về dữ liệu không phù hợp.
+
+Nhìn chung, Allergy Warning giúp người dùng tiếp cận thông tin thành
+phần và cảnh báo thuận tiện hơn thông qua việc phân tích ảnh và đối
+chiếu với hồ sơ dị ứng. Tuy nhiên, hệ thống chỉ hỗ trợ tham khảo,
+không thay thế việc kiểm tra nhãn gốc hoặc tư vấn chuyên môn.
+
+\section{Hạn chế}
+
+Hệ thống còn một số hạn chế:
+
+\begin{itemize}
+	\item Kết quả nhận diện phụ thuộc vào chất lượng hình ảnh và phản hồi của Gemini API.
+	\item Dữ liệu dị nguyên và các biến thể tên thành phần chưa bao quát mọi trường hợp.
+	\item Quy tắc chuẩn hóa có thể bỏ sót hoặc đối chiếu nhầm các tên gọi gần giống.
+	\item Việc đánh giá còn phụ thuộc vào số lượng và độ đa dạng của ảnh kiểm thử.
+\end{itemize}
+
+\section{Hướng cải thiện}
+
+Trong thời gian tới, hệ thống có thể được cải thiện bằng cách:
+
+\begin{itemize}
+	\item Bổ sung kiểm tra chất lượng ảnh và hướng dẫn người dùng chụp ảnh phù hợp.
+	\item Mở rộng, kiểm chứng dữ liệu dị nguyên và tên gọi tương đương.
+	\item Hoàn thiện quy tắc đối chiếu để hạn chế cảnh báo sai.
+	\item Tăng cường xử lý lỗi khi Cloudinary, Gemini API hoặc cơ sở dữ liệu gặp sự cố.
+	\item Xây dựng tập ảnh kiểm thử đa dạng để đánh giá chính xác hơn.
+\end{itemize}
+
+\section{Kết luận chương}
+
+Chương 5 đã trình bày kết quả xây dựng hệ thống Allergy Warning,
+các chức năng chính và phương pháp đánh giá. Qua đó, chương cũng
+chỉ ra những yếu tố ảnh hưởng đến kết quả phân tích, các hạn chế
+hiện tại và hướng cải thiện trong tương lai.

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2E7D32">
+  <title>{% block title %}Admin Panel · Allergy Warning{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="admin-layout">
+  <header class="admin-header">
+    <div class="admin-header-inner">
+      <a class="brand" href="{{ url_for('admin.dashboard') }}" aria-label="Allergy Warning Admin Panel">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span><strong>Allergy Warning</strong><small>Admin Panel</small></span>
+      </a>
+      <span class="admin-indicator">Admin Panel</span>
+      <div class="admin-header-actions">
+        <div class="admin-identity">
+          <strong>{{ session.get('user_name', session.get('user_email', 'Admin')) }}</strong>
+          {% if session.get('user_email') %}<span>{{ session.get('user_email') }}</span>{% endif %}
+        </div>
+        <form action="{{ url_for('admin.logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+          <button class="btn btn-secondary btn-small" type="submit">Đăng xuất</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}<div class="flash-container" role="status" aria-live="polite">
+      {% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
+    </div>{% endif %}
+  {% endwith %}
+
+  <div class="admin-shell">
+    <aside class="admin-nav" aria-label="Điều hướng quản trị">
+      <nav class="admin-nav-links">
+        <a class="{% if request.endpoint == 'admin.dashboard' %}is-active{% endif %}" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+        <a class="{% if request.endpoint in ['admin.products', 'admin.product_detail', 'admin.product_edit'] %}is-active{% endif %}" href="{{ url_for('admin.products') }}">Sản phẩm</a>
+        <a class="{% if request.endpoint == 'admin.crawler_placeholder' %}is-active{% endif %}" href="{{ url_for('admin.crawler_placeholder') }}">Data Crawler <span class="admin-coming-soon">Phase C</span></a>
+      </nav>
+      <form action="{{ url_for('admin.logout') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ admin_csrf_token }}">
+        <button class="admin-logout" type="submit">Đăng xuất</button>
+      </form>
+    </aside>
+    <main class="admin-content">
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+
+  <footer class="admin-footer"><span>Allergy Warning</span><span>Bảng điều khiển quản trị</span></footer>
+  <div class="admin-delete-modal" data-delete-modal hidden>
+    <section class="admin-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title" aria-describedby="delete-modal-description">
+      <span class="admin-delete-modal-icon" aria-hidden="true">!</span>
+      <h2 id="delete-modal-title">Xóa sản phẩm?</h2>
+      <p id="delete-modal-description">Bạn có chắc chắn muốn xóa sản phẩm này không?</p>
+      <p class="admin-delete-modal-note">Lịch sử quét của sản phẩm sẽ được giữ lại.</p>
+      <div class="admin-delete-modal-actions">
+        <button class="btn btn-secondary" type="button" data-delete-cancel>Hủy</button>
+        <button class="btn btn-danger" type="button" data-delete-confirm>Xóa sản phẩm</button>
+      </div>
+    </section>
+  </div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

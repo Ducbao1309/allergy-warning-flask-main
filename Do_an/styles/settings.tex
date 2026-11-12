@@ -1,0 +1,38 @@
+% !TEX root = ../do-an.tex
+% =====================================================================
+% styles/settings.tex
+% Cấu hình chung cho báo cáo Allergy Warning.
+% File này được nạp từ do-an.tex.
+% =====================================================================
+
+% Nhận diện và bố cục DAU
+\usepackage{styles/dau}
+\dauLayout
+
+\makeatletter
+\renewcommand{\l@chapter}{\@dottedtocline{0}{0em}{1.5em}}
+\makeatother
+
+% Hình ảnh
+\setkeys{Gin}{draft=false}
+
+% Bảng và bố cục bảng
+\usepackage{longtable}
+
+% Trang ngang cho sơ đồ lớn
+\usepackage{pdflscape}
+
+% Sơ đồ TikZ
+\usetikzlibrary{
+	positioning,
+	calc,
+	arrows.meta,
+	shapes.geometric,
+	shapes.misc,
+	fit,
+	backgrounds
+}
+
+% Giãn dòng và khoảng cách đoạn
+\linespread{1.25}
+\usepackage[skip=8pt plus 1pt, indent=15pt]{parskip}

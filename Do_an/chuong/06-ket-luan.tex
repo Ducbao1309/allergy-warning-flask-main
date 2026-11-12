@@ -1,0 +1,84 @@
+% =====================================================================
+% CHƯƠNG 6: KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN
+% ĐỀ TÀI: XÂY DỰNG HỆ THỐNG ĐỌC NHÃN MÁC VÀ CẢNH BÁO DỊ ỨNG THỰC PHẨM
+% =====================================================================
+
+\chapter{Kết luận và hướng phát triển}
+\label{ch:ketluan}
+
+\section{Kết luận}
+
+Đồ án ``Xây dựng hệ thống đọc nhãn mác và cảnh báo dị ứng thực
+phẩm'' đã xây dựng được hệ thống Allergy Warning nhằm hỗ trợ
+người dùng nhận diện thành phần trên nhãn thực phẩm và phát hiện
+các dị nguyên liên quan đến hồ sơ dị ứng cá nhân.
+
+Hệ thống được phát triển bằng Flask, sử dụng Gemini API để phân
+tích hình ảnh, Cloudinary để lưu trữ ảnh, TiDB Cloud để quản lý
+dữ liệu và Open Food Facts làm nguồn tham khảo thông tin sản phẩm.
+Ứng dụng được triển khai trên Render với các chức năng chính:
+quản lý tài khoản, hồ sơ dị ứng, quét nhãn thực phẩm, hiển thị
+cảnh báo và lưu lịch sử quét.
+
+Qua quá trình thực hiện, đồ án đã vận dụng kiến thức về phát triển
+ứng dụng web, quản lý cơ sở dữ liệu và tích hợp trí tuệ nhân tạo.
+Đồng thời, quá trình xây dựng cho thấy chất lượng kết quả phụ thuộc
+vào hình ảnh đầu vào, dữ liệu dị nguyên và khả năng phân tích của
+dịch vụ AI.
+
+Mặc dù đã hoàn thành các chức năng chính, hệ thống vẫn có thể
+nhận diện thiếu hoặc sai thông tin trong một số trường hợp.
+Do đó, Allergy Warning hiện đóng vai trò hỗ trợ tham khảo, không
+thay thế việc kiểm tra nhãn gốc hoặc tư vấn chuyên môn.
+
+\section{Bài học rút ra}
+
+Trong quá trình thực hiện đồ án, có thể rút ra một số bài học:
+
+\begin{itemize}
+	\item Cần kiểm tra chất lượng hình ảnh đầu vào để hạn chế
+	sai lệch trong quá trình nhận diện.
+	
+	\item Kết quả từ AI cần được kiểm tra và xử lý trước khi
+	sử dụng để đưa ra cảnh báo.
+	
+	\item Dữ liệu dị nguyên cần được chuẩn hóa, đặc biệt là
+	các tên gọi tương đương và những thành phần dễ nhầm lẫn.
+	
+	\item Cần kiểm thử toàn bộ quy trình, từ tải ảnh, phân tích,
+	đối chiếu đến hiển thị kết quả và lưu lịch sử.
+\end{itemize}
+
+\section{Hướng phát triển}
+
+Trong thời gian tới, hệ thống có thể được hoàn thiện theo các
+hướng sau:
+
+\begin{itemize}
+	\item Mở rộng dữ liệu:
+	Bổ sung dị nguyên và các tên gọi tương đương để nâng cao
+	khả năng nhận diện, đối chiếu thành phần.
+	
+	\item Cải thiện xử lý hình ảnh:
+	Bổ sung kiểm tra chất lượng ảnh và các bước tiền xử lý
+	nhằm hỗ trợ nhận diện nội dung nhãn chính xác hơn.
+	
+	\item Hoàn thiện phân tích và cảnh báo:
+	Cải thiện quy tắc chuẩn hóa, phân biệt thành phần nguyên liệu
+	với cảnh báo có thể chứa vết dị nguyên.
+	
+	\item Nâng cao khả năng kiểm thử:
+	Xây dựng tập ảnh nhãn thực phẩm đa dạng và sử dụng
+	Precision, Recall, F1-score để đánh giá khi có đủ dữ liệu.
+	
+	\item Tăng cường độ ổn định và bảo mật:
+	Hoàn thiện xử lý lỗi khi các dịch vụ bên ngoài hoặc cơ sở
+	dữ liệu gặp sự cố, đồng thời bảo vệ thông tin người dùng.
+	
+	\item Hoàn thiện giao diện:
+	Cải thiện cách trình bày kết quả, cảnh báo và hướng dẫn
+	để người dùng dễ theo dõi, kiểm tra thông tin.
+\end{itemize}
+
+Các hướng phát triển trên nhằm nâng cao độ tin cậy, khả năng
+sử dụng và tính ổn định của hệ thống trong thực tế.

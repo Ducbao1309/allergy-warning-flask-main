@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ error_title }} | Admin{% endblock %}
+
+{% block admin_content %}
+<section class="admin-placeholder card-panel">
+  <span class="admin-placeholder-icon admin-error-icon">!</span>
+  <h1>{{ error_title }}</h1>
+  <p>{{ error_message }}</p>
+  <a class="btn btn-secondary" href="{{ url_for('admin.dashboard') }}">Về dashboard</a>
+</section>
+{% endblock %}

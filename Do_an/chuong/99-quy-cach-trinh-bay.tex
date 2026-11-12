@@ -1,0 +1,205 @@
+% ---------------------------------------------------------------------
+%  CHƯƠNG 2 — QUY CÁCH TRÌNH BÀY
+%  Chương này đóng vai trò sổ tra cứu: mỗi mục là một mẫu em copy rồi sửa.
+%  Khi viết đồ án thật, em thay cả chương này bằng nội dung của mình.
+% ---------------------------------------------------------------------
+\chapter{Quy cách trình bày trong báo cáo}
+\label{ch:soanthao}
+
+\begin{muctieu}
+Chương này gom sẵn mẫu cho mọi thành phần em cần dùng: hình, bảng, công
+thức, mã nguồn, giải thuật, trích dẫn, chú thích và các hộp nhấn mạnh. Mỗi
+mục có đoạn mã mẫu, em copy rồi thay nội dung.
+\end{muctieu}
+
+\begin{luuy}
+Khi bắt đầu viết đồ án thật, hãy xoá cả chương này. Nó chỉ là sổ tra cứu,
+không phải một chương của báo cáo.
+\end{luuy}
+
+\section{Chèn hình ảnh}
+
+Đặt file ảnh vào thư mục \code{figs/} rồi dùng mẫu dưới đây. Mọi hình đều
+phải có chú thích, có nhãn, và phải được nhắc tới trong thân bài như
+Hình~\ref{fig:vidu}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{dau-campus.png}
+\caption{Một ví dụ về chèn hình ảnh từ file.}
+\label{fig:vidu}
+\end{figure}
+
+Nếu hình là sơ đồ do em tự vẽ thì nên vẽ thẳng bằng TikZ như
+Hình~\ref{fig:luongxuly}, vì sơ đồ vẽ bằng TikZ luôn nét khi phóng to và
+dùng đúng bộ màu của trường.
+
+\begin{figure}[H]
+\centering
+% \resizebox ép sơ đồ vừa đúng bề ngang trang, tránh tràn lề
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=8mm and 12mm]
+  \node[io] (in) {Ảnh đầu vào};
+  \node[process, right=of in] (pre) {Tiền xử lý};
+  \node[decision, right=of pre] (chk) {Đủ chất lượng?};
+  \node[process, right=of chk] (mod) {Mô hình CNN};
+  \node[startstop, below=of chk] (loai) {Loại bỏ};
+  \draw[flowarr] (in)  -- (pre);
+  \draw[flowarr] (pre) -- (chk);
+  \draw[flowarr] (chk) -- node[above, font=\scriptsize] {có} (mod);
+  \draw[flowarr] (chk) -- node[right, font=\scriptsize] {không} (loai);
+\end{tikzpicture}}
+\caption{Một ví dụ sơ đồ luồng xử lý vẽ bằng TikZ.}
+\label{fig:luongxuly}
+\end{figure}
+
+\section{Chèn bảng}
+
+Bảng dùng chú thích đặt phía trên, đúng quy cách trình bày khoa học. Dùng
+\code{booktabs} với ba loại đường kẻ \code{toprule}, \code{midrule},
+\code{bottomrule}, tránh kẻ dọc cho mọi ô.
+
+\begin{table}[H]
+\centering
+\caption{Một ví dụ về bảng so sánh kết quả.}
+\label{tab:sosanh}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}>{\bfseries\color{daunavy}}l cccc}
+\toprule
+\rowcolor{gray100}\bfseries\color{daunavy}Mô hình & \bfseries\color{daumaroon}Accuracy & \bfseries\color{daumaroon}Precision & \bfseries\color{daumaroon}Recall & \bfseries\color{daumaroon}F1 \\
+\midrule
+Huấn luyện từ đầu   & 0,848 & 0,841 & 0,836 & 0,838 \\
+Học chuyển giao     & 0,912 & 0,907 & 0,903 & 0,905 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{luuy}
+Bảng rộng quá lề là lỗi hay gặp nhất. Nếu bảng tràn, hãy giảm cỡ chữ bằng
+\code{small} hoặc \code{footnotesize}, hoặc gộp bớt cột. Đừng để LaTeX tự
+tràn rồi bỏ qua.
+\end{luuy}
+
+\section{Chèn công thức toán học}
+
+Công thức đặt giữa dòng và có đánh số thì dùng môi trường \code{equation},
+như Công thức~\eqref{eq:softmax}. Công thức ngắn chèn trong câu thì viết
+giữa hai dấu đô la, ví dụ $y = f(x)$.
+
+\begin{equation}
+p(y = k \mid \mathbf{x}) = \frac{\exp(z_k)}{\sum_{j=1}^{K} \exp(z_j)},
+\label{eq:softmax}
+\end{equation}
+
+trong đó $z_k$ là điểm số thô mà mạng gán cho lớp $k$, và $K$ là số lớp. Mọi
+ký hiệu xuất hiện trong công thức đều phải được giải thích ngay sau đó, như
+câu này đang làm với \eqref{eq:softmax}.
+
+\begin{ghinho}
+Công thức là một phần của câu văn, không phải một khối trôi nổi. Trước công
+thức phải có câu dẫn vào, sau công thức phải có câu giải thích ký hiệu hoặc
+ý nghĩa. Công thức đứng một mình không ai đọc.
+\end{ghinho}
+
+\section{Chèn mã nguồn}
+
+Mẫu này dùng gói \code{listings} thay cho \code{minted} của bản gốc, vì
+\code{listings} không cần bật \code{-shell-escape} nên build được ngay trên
+Overleaf lẫn máy cá nhân.
+
+Cách thứ nhất là gõ trực tiếp, kết quả như Mã nguồn~\ref{lst:tructiep}.
+
+\begin{lstlisting}[language=Python, caption={Chèn mã nguồn trực tiếp vào báo cáo.}, label={lst:tructiep}]
+import torch.nn as nn
+
+# A small convolutional block: conv, batch norm, activation
+def conv_block(in_ch, out_ch):
+    return nn.Sequential(
+        nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
+        nn.BatchNorm2d(out_ch),
+        nn.ReLU(inplace=True),
+    )
+\end{lstlisting}
+
+Cách thứ hai là nạp mã từ một file có sẵn trong đồ án. Cách này tiện vì báo
+cáo luôn khớp với mã thật, sửa mã là báo cáo tự cập nhật theo. Mã
+nguồn~\ref{lst:tufile} được nạp từ file \code{code/vi-du-huan-luyen.py}.
+
+\lstinputlisting[language=Python, caption={Chèn mã nguồn từ file có sẵn.}, label={lst:tufile}]{code/vi-du-huan-luyen.py}
+
+\begin{luuy}
+Quy ước của khoa: comment trong code viết bằng tiếng Anh, còn văn xuôi của
+báo cáo viết bằng tiếng Việt. Không đặt tiếng Việt bên trong khối mã nguồn,
+vì phông mã nguồn không có đủ dấu tiếng Việt.
+\end{luuy}
+
+Chỉ đưa vào thân bài những đoạn mã cốt lõi. Mã dài để ở phụ lục hoặc chỉ dẫn
+tới kho \code{git} của đồ án.
+
+\section{Biểu diễn giải thuật}
+
+Giải thuật trình bày bằng mã giả, không phải mã của một ngôn ngữ cụ thể,
+để người đọc nắm được ý tưởng mà không cần biết ngôn ngữ đó.
+Giải thuật~\ref{alg:nguyento} là một ví dụ.
+
+\begin{algorithm}[H]
+\caption{Kiểm tra một số tự nhiên có phải số nguyên tố hay không}
+\label{alg:nguyento}
+\hspace*{\algorithmicindent}\textbf{Đầu vào:} số tự nhiên $n$\\
+\hspace*{\algorithmicindent}\textbf{Đầu ra:} \textsc{True} nếu $n$ là số nguyên tố, ngược lại \textsc{False}
+\begin{algorithmic}[1]
+\Function{LaSoNguyenTo}{$n$}
+  \If{$n < 2$}
+    \State \Return \textsc{False}
+  \EndIf
+  \For{$i \gets 2$ \textbf{to} $\lfloor \sqrt{n} \rfloor$}
+    \If{$n \bmod i = 0$}
+      \State \Return \textsc{False}
+    \EndIf
+  \EndFor
+  \State \Return \textsc{True}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\section{Trích dẫn tài liệu tham khảo}
+
+Tài liệu tham khảo khai báo trong file \code{refs.bib}, mỗi tài liệu một
+khối. Trong thân bài em gọi bằng lệnh \code{cite} kèm khoá của tài liệu, ví
+dụ mô hình AlexNet~\cite{Krizhevsky2012} và mạng ResNet~\cite{He2016}. LaTeX
+tự đánh số và tự dựng danh mục ở cuối báo cáo, nên em không phải đánh số tay.
+
+\begin{ghinho}
+Chỉ liệt kê trong \code{refs.bib} những tài liệu em thực sự trích dẫn. Tài
+liệu khai báo mà không gọi \code{cite} sẽ không xuất hiện trong danh mục.
+\end{ghinho}
+
+\section{Chú thích cuối trang}
+
+Khi cần giải thích thêm mà không muốn làm gãy mạch câu, dùng lệnh
+\code{footnote}\footnote{Đây là một dòng chú thích cuối trang.}. Đừng lạm
+dụng, mỗi trang nhiều lắm một đến hai chú thích.
+
+\section{Các hộp nhấn mạnh}
+
+Mẫu này có sẵn bốn loại hộp để làm nổi những ý quan trọng.
+
+\begin{dinhnghia}[Học chuyển giao]
+Học chuyển giao \en{(transfer learning)} là kỹ thuật tận dụng tri thức mà mô
+hình đã học được trên một bài toán nguồn có nhiều dữ liệu, để giải một bài
+toán đích có ít dữ liệu hơn.
+\end{dinhnghia}
+
+\begin{ghinho}
+Hộp ghi nhớ dùng cho ý chốt mà em muốn người đọc mang theo sau khi đọc xong
+mục đó.
+\end{ghinho}
+
+\begin{luuy}
+Hộp lưu ý dùng cho cảnh báo, điều kiện áp dụng, hoặc lỗi mà người đọc dễ mắc
+nếu làm theo.
+\end{luuy}
+
+\begin{vidu}[minh hoạ một tình huống cụ thể]
+Hộp ví dụ tự đánh số theo chương, tiện khi em cần dẫn lại một ví dụ ở chỗ
+khác trong báo cáo.
+\end{vidu}

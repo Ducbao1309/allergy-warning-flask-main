@@ -1,0 +1,136 @@
+\xpg@aux {}{vietnamese}
+\contentsline {chapter}{Lời cam đoan}{i}{chapter*.1}%
+\contentsline {chapter}{Lời cảm ơn}{ii}{chapter*.2}%
+\contentsline {chapter}{Tóm tắt}{iii}{chapter*.3}%
+\contentsline {chapter}{\numberline {1}Mở đầu}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Lý do chọn đề tài}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Mục tiêu của đồ án}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Phạm vi và đối tượng}{2}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Bố cục báo cáo}{2}{section.1.4}%
+\contentsline {chapter}{\numberline {2}Cơ sở lý thuyết và công nghệ}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Kiến thức nền tảng}{4}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Dị ứng thực phẩm và thành phần gây dị ứng}{4}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Nhãn thành phần thực phẩm và thông tin cảnh báo dị nguyên}{5}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Nhận dạng và trích xuất văn bản từ hình ảnh}{5}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Tiền xử lý và chuẩn hóa văn bản}{6}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}Phân tích thành phần và đối chiếu dữ liệu dị nguyên}{6}{subsection.2.1.5}%
+\contentsline {subsection}{\numberline {2.1.6}Ứng dụng trí tuệ nhân tạo trong phân tích nhãn thực phẩm}{7}{subsection.2.1.6}%
+\contentsline {section}{\numberline {2.2}Công nghệ và công cụ sử dụng}{8}{section.2.2}%
+\contentsline {subsection}{\numberline {2.2.1}Ngôn ngữ lập trình Python}{8}{subsection.2.2.1}%
+\contentsline {subsection}{\numberline {2.2.2}Framework Flask}{8}{subsection.2.2.2}%
+\contentsline {subsection}{\numberline {2.2.3}Gemini API}{9}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.4}TiDB Cloud và cơ sở dữ liệu MySQL}{9}{subsection.2.2.4}%
+\contentsline {chapter}{\numberline {3}Phân tích và thiết kế hệ thống}{10}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Phân tích bài toán}{10}{section.3.1}%
+\contentsline {subsection}{\numberline {3.1.1}Đặt vấn đề}{10}{subsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.1.2}Mục tiêu phân tích}{10}{subsection.3.1.2}%
+\contentsline {subsection}{\numberline {3.1.3}Phạm vi của hệ thống}{11}{subsection.3.1.3}%
+\contentsline {section}{\numberline {3.2}Khảo sát và xác định yêu cầu hệ thống}{11}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Đối tượng sử dụng}{11}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Yêu cầu chức năng}{12}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Yêu cầu phi chức năng}{13}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Phân tích và mô hình hóa Use Case}{14}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Xác định tác nhân}{14}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Sơ đồ Use Case tổng quát}{14}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Sơ đồ Use Case phân rã chức năng tài khoản}{15}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Sơ đồ Use Case phân rã chức năng quản lý hồ sơ dị ứng}{16}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Sơ đồ Use Case phân rã chức năng quét nhãn thực phẩm}{17}{subsection.3.3.5}%
+\contentsline {subsection}{\numberline {3.3.6}Sơ đồ Use Case phân rã chức năng kết quả và lịch sử}{19}{subsection.3.3.6}%
+\contentsline {subsection}{\numberline {3.3.7}Đặc tả các Use Case chính}{20}{subsection.3.3.7}%
+\contentsline {subsubsection}{\numberline {3.3.7.1}Đặc tả Use Case đăng ký tài khoản}{20}{subsubsection.3.3.7.1}%
+\contentsline {subsubsection}{\numberline {3.3.7.2}Đặc tả Use Case đăng nhập}{21}{subsubsection.3.3.7.2}%
+\contentsline {subsubsection}{\numberline {3.3.7.3}Đặc tả Use Case quản lý hồ sơ dị ứng}{21}{subsubsection.3.3.7.3}%
+\contentsline {subsubsection}{\numberline {3.3.7.4}Đặc tả Use Case quét nhãn thực phẩm}{22}{subsubsection.3.3.7.4}%
+\contentsline {subsubsection}{\numberline {3.3.7.5}Đặc tả Use Case xem lịch sử quét}{23}{subsubsection.3.3.7.5}%
+\contentsline {section}{\numberline {3.4}Thiết kế kiến trúc hệ thống}{23}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Kiến trúc tổng thể}{23}{subsection.3.4.1}%
+\contentsline {subsection}{\numberline {3.4.2}Sơ đồ kiến trúc xử lý ảnh và phân tích dị nguyên}{24}{subsection.3.4.2}%
+\contentsline {subsection}{\numberline {3.4.3}Giao diện web}{25}{subsection.3.4.3}%
+\contentsline {subsection}{\numberline {3.4.4}Thành phần xử lý nghiệp vụ}{25}{subsection.3.4.4}%
+\contentsline {subsection}{\numberline {3.4.5}Thành phần nhận diện thông tin nhãn}{25}{subsection.3.4.5}%
+\contentsline {subsection}{\numberline {3.4.6}Thành phần phân tích và cảnh báo}{26}{subsection.3.4.6}%
+\contentsline {subsection}{\numberline {3.4.7}Thành phần cơ sở dữ liệu}{26}{subsection.3.4.7}%
+\contentsline {subsection}{\numberline {3.4.8}Dịch vụ bên ngoài}{26}{subsection.3.4.8}%
+\contentsline {section}{\numberline {3.5}Thiết kế quy trình xử lý}{27}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Quy trình đăng ký và đăng nhập}{27}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Quy trình quản lý hồ sơ dị ứng}{27}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Quy trình quét nhãn thực phẩm}{27}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Sơ đồ hoạt động quy trình quét nhãn}{28}{subsection.3.5.4}%
+\contentsline {subsection}{\numberline {3.5.5}Sơ đồ tuần tự quy trình quét nhãn}{30}{subsection.3.5.5}%
+\contentsline {subsection}{\numberline {3.5.6}Quy trình phân loại cảnh báo}{30}{subsection.3.5.6}%
+\contentsline {subsection}{\numberline {3.5.7}Quy trình xem lịch sử quét}{31}{subsection.3.5.7}%
+\contentsline {section}{\numberline {3.6}Thiết kế cơ sở dữ liệu}{31}{section.3.6}%
+\contentsline {subsection}{\numberline {3.6.1}Mục tiêu thiết kế}{31}{subsection.3.6.1}%
+\contentsline {subsection}{\numberline {3.6.2}Danh sách các bảng dữ liệu}{31}{subsection.3.6.2}%
+\contentsline {subsubsection}{\numberline {3.6.2.1}Bảng allergens}{31}{subsubsection.3.6.2.1}%
+\contentsline {subsubsection}{\numberline {3.6.2.2}Bảng products}{32}{subsubsection.3.6.2.2}%
+\contentsline {subsubsection}{\numberline {3.6.2.3}Bảng product\_ingredients}{33}{subsubsection.3.6.2.3}%
+\contentsline {subsubsection}{\numberline {3.6.2.4}Bảng user}{33}{subsubsection.3.6.2.4}%
+\contentsline {subsubsection}{\numberline {3.6.2.5}Bảng user\_allergens}{34}{subsubsection.3.6.2.5}%
+\contentsline {subsubsection}{\numberline {3.6.2.6}Bảng scan\_history}{34}{subsubsection.3.6.2.6}%
+\contentsline {subsection}{\numberline {3.6.3}Mối quan hệ giữa các bảng}{35}{subsection.3.6.3}%
+\contentsline {subsection}{\numberline {3.6.4}Sơ đồ ERD tổng quát}{35}{subsection.3.6.4}%
+\contentsline {subsection}{\numberline {3.6.5}Nguyên tắc bảo đảm dữ liệu}{36}{subsection.3.6.5}%
+\contentsline {section}{\numberline {3.7}Thiết kế giao diện hệ thống}{37}{section.3.7}%
+\contentsline {subsection}{\numberline {3.7.1}Giao diện đăng nhập}{37}{subsection.3.7.1}%
+\contentsline {subsection}{\numberline {3.7.2}Giao diện đăng ký tài khoản}{38}{subsection.3.7.2}%
+\contentsline {subsection}{\numberline {3.7.3}Giao diện Dashboard người dùng}{38}{subsection.3.7.3}%
+\contentsline {subsection}{\numberline {3.7.4}Giao diện hồ sơ cá nhân}{39}{subsection.3.7.4}%
+\contentsline {subsection}{\numberline {3.7.5}Giao diện quét nhãn thực phẩm}{40}{subsection.3.7.5}%
+\contentsline {subsection}{\numberline {3.7.6}Giao diện lịch sử quét}{40}{subsection.3.7.6}%
+\contentsline {subsection}{\numberline {3.7.7}Giao diện chi tiết lịch sử quét}{41}{subsection.3.7.7}%
+\contentsline {subsection}{\numberline {3.7.8}Giao diện kết quả phân tích}{42}{subsection.3.7.8}%
+\contentsline {section}{\numberline {3.8}Thiết kế giao diện quản trị}{44}{section.3.8}%
+\contentsline {subsection}{\numberline {3.8.1}Dashboard quản trị}{44}{subsection.3.8.1}%
+\contentsline {subsection}{\numberline {3.8.2}Giao diện lấy thông tin sản phẩm}{44}{subsection.3.8.2}%
+\contentsline {subsection}{\numberline {3.8.3}Giao diện quản lý sản phẩm}{46}{subsection.3.8.3}%
+\contentsline {section}{\numberline {3.9}Kết luận chương}{47}{section.3.9}%
+\contentsline {chapter}{\numberline {4}Cài đặt và thử nghiệm}{48}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Môi trường triển khai}{48}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Cơ sở dữ liệu}{49}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Triển khai ứng dụng}{49}{subsection.4.1.2}%
+\contentsline {section}{\numberline {4.2}Cài đặt các chức năng chính}{49}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Đăng ký và đăng nhập}{49}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Quản lý hồ sơ dị ứng}{49}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Quét và lưu trữ ảnh nhãn thực phẩm}{50}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Phân tích nội dung nhãn bằng Gemini API}{50}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}Tra cứu dữ liệu sản phẩm}{50}{subsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.2.6}Chuẩn hóa và đối chiếu dị nguyên}{50}{subsection.4.2.6}%
+\contentsline {subsection}{\numberline {4.2.7}Hiển thị kết quả và lưu lịch sử quét}{50}{subsection.4.2.7}%
+\contentsline {section}{\numberline {4.3}Quy trình hoạt động của hệ thống}{51}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Giao diện hệ thống}{51}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Giao diện đăng nhập và đăng ký}{51}{subsection.4.4.1}%
+\contentsline {subsection}{\numberline {4.4.2}Giao diện trang chủ và hồ sơ dị ứng}{52}{subsection.4.4.2}%
+\contentsline {subsection}{\numberline {4.4.3}Giao diện quét nhãn và kết quả phân tích}{52}{subsection.4.4.3}%
+\contentsline {subsection}{\numberline {4.4.4}Giao diện lịch sử quét}{52}{subsection.4.4.4}%
+\contentsline {section}{\numberline {4.5}Kiểm thử hệ thống}{52}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Mục tiêu kiểm thử}{52}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Các trường hợp kiểm thử}{52}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Đánh giá kết quả kiểm thử}{56}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Tổng hợp kết quả kiểm thử}{56}{subsection.4.5.4}%
+\contentsline {section}{\numberline {4.6}Hạn chế và hướng phát triển}{56}{section.4.6}%
+\contentsline {subsection}{\numberline {4.6.1}Hạn chế}{56}{subsection.4.6.1}%
+\contentsline {subsection}{\numberline {4.6.2}Hướng phát triển}{57}{subsection.4.6.2}%
+\contentsline {section}{\numberline {4.7}Kết luận chương}{57}{section.4.7}%
+\contentsline {chapter}{\numberline {5}Kết quả và đánh giá}{58}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Kết quả đạt được}{58}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Kết quả xây dựng hệ thống}{58}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Kết quả phân tích và cảnh báo}{58}{subsection.5.1.2}%
+\contentsline {section}{\numberline {5.2}Đánh giá các chức năng}{59}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Quản lý tài khoản và hồ sơ dị ứng}{59}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Phân tích hình ảnh và nhận diện nội dung}{59}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Đối chiếu dị nguyên}{59}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Hiển thị kết quả và lịch sử quét}{59}{subsection.5.2.4}%
+\contentsline {section}{\numberline {5.3}Phương pháp và tiêu chí đánh giá}{59}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Phương pháp đánh giá}{59}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Các tiêu chí đánh giá}{59}{subsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.3.3}Đánh giá định lượng}{60}{subsection.5.3.3}%
+\contentsline {section}{\numberline {5.4}Bàn luận}{61}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Hạn chế}{61}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Hướng cải thiện}{61}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Kết luận chương}{62}{section.5.7}%
+\contentsline {chapter}{\numberline {6}Kết luận và hướng phát triển}{63}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Kết luận}{63}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Bài học rút ra}{63}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Hướng phát triển}{64}{section.6.3}%
+\contentsline {chapter}{Tài liệu tham khảo}{65}{section*.43}%

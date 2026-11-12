@@ -1,0 +1,242 @@
+% ---------------------------------------------------------------------
+% CHƯƠNG 4 — CÀI ĐẶT VÀ THỬ NGHIỆM
+% Hệ thống Allergy Warning
+% ---------------------------------------------------------------------
+
+\chapter{Cài đặt và thử nghiệm}
+\label{ch:caidat}
+
+\section{Môi trường triển khai}
+
+Hệ thống Allergy Warning được xây dựng dưới dạng ứng dụng web, hỗ trợ người dùng tải ảnh nhãn thực phẩm, phân tích thành phần và đối chiếu dị nguyên với hồ sơ cá nhân. Phía máy chủ sử dụng Python và Flask để tiếp nhận yêu cầu, xử lý nghiệp vụ và kết nối các dịch vụ bên ngoài.
+
+Cơ sở dữ liệu được triển khai trên TiDB Cloud với khả năng tương thích MySQL, dùng để lưu thông tin tài khoản, hồ sơ dị ứng, dữ liệu sản phẩm và lịch sử quét. Hình ảnh nhãn thực phẩm được lưu trữ trên Cloudinary; Gemini API hỗ trợ nhận diện nội dung trên ảnh và trích xuất thông tin sản phẩm, thành phần, dị nguyên. Ngoài ra, hệ thống sử dụng Open Food Facts làm nguồn dữ liệu tham khảo về sản phẩm.
+
+Ứng dụng Flask được triển khai trên Render và người dùng có thể truy cập thông qua trình duyệt web. Các thông tin kết nối và khóa API được cấu hình bằng biến môi trường nhằm hạn chế đưa dữ liệu nhạy cảm trực tiếp vào mã nguồn.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Các công nghệ sử dụng trong hệ thống Allergy Warning}
+	\label{tab:ch4-cong-nghe}
+	\small
+	\renewcommand{\arraystretch}{1.2}
+	\begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash}p{2.8cm}|>{\raggedright\arraybackslash}p{3.2cm}|>{\raggedright\arraybackslash}X|}
+		\hline
+		\textbf{Thành phần} & \textbf{Công nghệ} & \textbf{Vai trò} \\ \hline
+		Ngôn ngữ lập trình & Python & Xây dựng và xử lý chức năng phía máy chủ. \\ \hline
+		Framework web & Flask & Tiếp nhận yêu cầu, xử lý nghiệp vụ và kết nối dịch vụ. \\ \hline
+		Cơ sở dữ liệu & TiDB Cloud & Lưu tài khoản, hồ sơ dị ứng, sản phẩm và lịch sử quét. \\ \hline
+		Trí tuệ nhân tạo & Gemini API & Phân tích ảnh và trích xuất thông tin trên nhãn. \\ \hline
+		Lưu trữ hình ảnh & Cloudinary & Lưu ảnh nhãn thực phẩm và cung cấp URL ảnh. \\ \hline
+		Nguồn dữ liệu & Open Food Facts & Cung cấp thông tin tham khảo về sản phẩm và thành phần. \\ \hline
+		Giao diện & HTML, CSS, JavaScript & Xây dựng giao diện và xử lý tương tác người dùng. \\ \hline
+		Triển khai & Render & Vận hành ứng dụng Flask trên môi trường trực tuyến. \\ \hline
+	\end{tabularx}
+\end{table}
+
+Bảng trên tổng hợp các công nghệ chính và vai trò của từng thành phần trong hệ thống.
+
+\subsection{Cơ sở dữ liệu}
+
+Cơ sở dữ liệu được triển khai trên TiDB Cloud, gồm các bảng chính: \texttt{user}, \texttt{allergens}, \texttt{products}, \texttt{product\_ingredients}, \texttt{user\_allergens} và \texttt{scan\_history}. Trong đó, \texttt{user} lưu thông tin tài khoản; \texttt{allergens} quản lý danh mục dị nguyên; \texttt{products} và \texttt{product\_ingredients} lưu thông tin sản phẩm, thành phần; \texttt{user\_allergens} lưu các dị nguyên người dùng đã chọn; \texttt{scan\_history} ghi nhận kết quả những lần quét.
+
+Ảnh nhãn được lưu trên Cloudinary thay vì lưu trực tiếp dưới dạng dữ liệu nhị phân trong cơ sở dữ liệu. Hệ thống lưu và sử dụng URL do Cloudinary trả về để truy xuất hoặc hiển thị ảnh khi cần.
+
+\subsection{Triển khai ứng dụng}
+
+Mã nguồn được quản lý bằng Git và lưu trữ trên GitHub. Ứng dụng Flask được triển khai trên Render; các dịch vụ TiDB Cloud, Cloudinary và Gemini API được kết nối thông qua cấu hình môi trường. Cách triển khai này tách biệt máy chủ ứng dụng, cơ sở dữ liệu và dịch vụ lưu trữ ảnh, đồng thời giúp quản lý cấu hình của từng dịch vụ độc lập.
+
+\section{Cài đặt các chức năng chính}
+
+\subsection{Đăng ký và đăng nhập}
+
+Chức năng đăng ký cho phép người dùng tạo tài khoản thông qua biểu mẫu nhập thông tin. Hệ thống kiểm tra dữ liệu đầu vào trước khi lưu tài khoản vào cơ sở dữ liệu. Chức năng đăng nhập xác thực thông tin tài khoản; nếu hợp lệ, người dùng được truy cập các chức năng tương ứng, ngược lại hệ thống hiển thị thông báo phù hợp. Mật khẩu được lưu dưới dạng đã băm nhằm bảo vệ thông tin tài khoản.
+
+\subsection{Quản lý hồ sơ dị ứng}
+
+Người dùng có thể lựa chọn những nhóm dị nguyên cần quan tâm từ danh mục được hệ thống quản lý. Các lựa chọn được lưu thông qua bảng \texttt{user\_allergens} và liên kết với tài khoản tương ứng. Khi phân tích sản phẩm, hệ thống sử dụng hồ sơ này để đối chiếu với những dị nguyên nhận diện được trên nhãn.
+
+\subsection{Quét và lưu trữ ảnh nhãn thực phẩm}
+
+Người dùng chọn ảnh nhãn thực phẩm từ thiết bị và gửi lên hệ thống. Flask tiếp nhận, kiểm tra tệp đầu vào, sau đó tải ảnh lên Cloudinary. Khi tải lên thành công, Cloudinary trả về URL ảnh để hệ thống sử dụng trong quá trình phân tích và lưu lịch sử. Ảnh mờ, thiếu sáng hoặc không thể đọc rõ nội dung có thể ảnh hưởng đến kết quả nhận diện.
+
+\subsection{Phân tích nội dung nhãn bằng Gemini API}
+
+Sau khi nhận ảnh, máy chủ gửi yêu cầu đến Gemini API để hỗ trợ đọc nội dung nhãn. Kết quả trích xuất có thể gồm tên sản phẩm, thương hiệu, mã vạch, danh sách thành phần và thông tin cảnh báo dị nguyên. Flask tiếp nhận dữ liệu trả về, kiểm tra và tổ chức thành các trường thông tin phục vụ những bước xử lý tiếp theo.
+
+Kết quả phụ thuộc vào chất lượng ảnh và nội dung thể hiện trên bao bì. Vì vậy, hệ thống cần xử lý trường hợp dữ liệu thiếu, không hợp lệ hoặc dịch vụ AI không phản hồi; không sử dụng dữ liệu chưa được xác nhận để đưa ra kết luận cảnh báo.
+
+\subsection{Tra cứu dữ liệu sản phẩm}
+
+Open Food Facts được sử dụng làm nguồn dữ liệu tham khảo để tra cứu thông tin sản phẩm. Dữ liệu có thể bao gồm mã vạch, tên sản phẩm, thương hiệu, thành phần và dị nguyên. Hệ thống kiểm tra thông tin nhận được trước khi sử dụng hoặc bổ sung vào cơ sở dữ liệu. Do dữ liệu của từng sản phẩm có thể chưa đầy đủ, thông tin thiếu không được xem là bằng chứng cho thấy sản phẩm không chứa dị nguyên.
+
+\subsection{Chuẩn hóa và đối chiếu dị nguyên}
+
+Thông tin thành phần sau khi trích xuất được chuẩn hóa nhằm thống nhất cách viết, loại bỏ khoảng trắng dư thừa và xử lý những tên gọi tương đương đã có trong dữ liệu tham chiếu. Việc chuẩn hóa phải giữ nguyên ý nghĩa của nội dung trên nhãn, đặc biệt là các cụm từ thể hiện cảnh báo của nhà sản xuất.
+
+Sau đó, hệ thống đối chiếu thành phần và thông tin cảnh báo với danh mục dị nguyên. Kết quả được phân biệt thành dị nguyên nhận diện từ thành phần, dị nguyên được nhà sản xuất cảnh báo riêng và dị nguyên có thể chứa vết. Các dị nguyên nhận diện được tiếp tục so sánh với hồ sơ cá nhân để xác định nội dung trùng khớp.
+
+\subsection{Hiển thị kết quả và lưu lịch sử quét}
+
+Kết quả phân tích được trình bày theo từng nhóm thông tin, gồm thông tin sản phẩm, thành phần nhận diện được, dị nguyên liên quan và trạng thái đối chiếu với hồ sơ dị ứng. Người dùng có thể xem lại những lần phân tích trước đó tại chức năng lịch sử quét. Mỗi bản ghi được liên kết với tài khoản tương ứng và lưu trong bảng \texttt{scan\_history}.
+
+Kết quả phân tích chỉ có tính chất hỗ trợ tham khảo, không thay thế việc kiểm tra nhãn sản phẩm thực tế hoặc tư vấn chuyên môn y tế.
+
+\section{Quy trình hoạt động của hệ thống}
+
+Quy trình quét nhãn bắt đầu khi người dùng chọn và gửi ảnh lên hệ thống. Flask kiểm tra ảnh đầu vào, tải ảnh lên Cloudinary và gửi ảnh đến Gemini API để trích xuất thông tin. Dữ liệu nhận được tiếp tục được chuẩn hóa, đối chiếu với danh mục dị nguyên và hồ sơ của người dùng. Cuối cùng, hệ thống tổng hợp kết quả, lưu lịch sử quét vào TiDB Cloud và hiển thị thông tin trên giao diện.
+
+\begin{enumerate}
+	\item Người dùng chọn ảnh nhãn thực phẩm và gửi lên hệ thống.
+	\item Flask kiểm tra định dạng và dữ liệu ảnh đầu vào.
+	\item Ảnh được tải lên Cloudinary để nhận URL lưu trữ.
+	\item Gemini API phân tích ảnh và trích xuất thông tin trên nhãn.
+	\item Flask kiểm tra, chuẩn hóa dữ liệu thành phần và cảnh báo.
+	\item Hệ thống đối chiếu dị nguyên với dữ liệu và hồ sơ người dùng.
+	\item Kết quả phân tích được tổng hợp và lưu vào lịch sử quét.
+	\item Giao diện hiển thị kết quả để người dùng kiểm tra.
+\end{enumerate}
+
+Quy trình trên thể hiện luồng xử lý chính từ lúc tiếp nhận ảnh đến khi trả kết quả. Nếu ảnh không hợp lệ, dịch vụ bên ngoài gặp lỗi hoặc dữ liệu trích xuất không đáp ứng yêu cầu, hệ thống cần thông báo và không hiển thị kết luận chưa có căn cứ.
+
+\section{Giao diện hệ thống}
+
+Giao diện Allergy Warning được xây dựng bằng HTML, CSS và JavaScript, hỗ trợ người dùng thao tác với các chức năng đăng nhập, quản lý hồ sơ dị ứng, quét nhãn, xem kết quả và tra cứu lịch sử.
+
+\subsection{Giao diện đăng nhập và đăng ký}
+
+Giao diện đăng nhập cho phép người dùng nhập thông tin tài khoản để truy cập hệ thống. Giao diện đăng ký cung cấp biểu mẫu tạo tài khoản mới và thông báo khi dữ liệu nhập vào chưa hợp lệ.
+
+% Chèn hình ảnh giao diện đăng nhập và đăng ký tại đây nếu có.
+
+\subsection{Giao diện trang chủ và hồ sơ dị ứng}
+
+Trang chủ cung cấp các chức năng chính để người dùng truy cập. Tại hồ sơ dị ứng, người dùng có thể xem và lựa chọn những nhóm dị nguyên cần quan tâm.
+
+% Chèn hình ảnh giao diện trang chủ và hồ sơ dị ứng tại đây nếu có.
+
+\subsection{Giao diện quét nhãn và kết quả phân tích}
+
+Giao diện quét nhãn cho phép người dùng tải ảnh thực phẩm lên để phân tích. Sau khi xử lý, trang kết quả hiển thị thông tin sản phẩm, thành phần được nhận diện, dị nguyên liên quan và cảnh báo đối chiếu với hồ sơ cá nhân.
+
+% Chèn hình ảnh giao diện quét nhãn và kết quả phân tích tại đây nếu có.
+
+\subsection{Giao diện lịch sử quét}
+
+Giao diện lịch sử quét hiển thị những lần phân tích đã được lưu theo tài khoản. Người dùng có thể xem lại thông tin của từng lần quét để tham khảo.
+
+% Chèn hình ảnh giao diện lịch sử quét tại đây nếu có.
+
+\section{Kiểm thử hệ thống}
+
+\subsection{Mục tiêu kiểm thử}
+
+Kiểm thử nhằm đánh giá hoạt động của các chức năng chính, tập trung vào đăng nhập, quản lý hồ sơ dị ứng, tải ảnh, phân tích nhãn, đối chiếu dị nguyên, hiển thị kết quả và lưu lịch sử. Các trường hợp kiểm thử bao gồm dữ liệu hợp lệ, dữ liệu không hợp lệ và những tình huống lỗi có thể phát sinh.
+
+\subsection{Các trường hợp kiểm thử}
+
+Bảng~\ref{tab:ch4-testcases} trình bày một số trường hợp kiểm thử chính. Kết quả thực tế cần được cập nhật sau khi thực hiện kiểm thử trên ứng dụng.
+
+\begin{longtable}{|>{\centering\arraybackslash}p{0.8cm}|>{\raggedright\arraybackslash}p{3.1cm}|>{\raggedright\arraybackslash}p{8.2cm}|>{\raggedright\arraybackslash}p{2.2cm}|}
+	\caption{Các trường hợp kiểm thử hệ thống Allergy Warning}
+	\label{tab:ch4-testcases}\\
+	\hline
+	\textbf{Mã} & \textbf{Trường hợp kiểm thử} & \textbf{Kết quả mong đợi} & \textbf{Kết quả thực tế} \\ \hline
+	\endfirsthead
+	
+	\multicolumn{4}{c}{\tablename\ \thetable{} -- tiếp theo}\\
+	\hline
+	\textbf{Mã} & \textbf{Trường hợp kiểm thử} & \textbf{Kết quả mong đợi} & \textbf{Kết quả thực tế} \\ \hline
+	\endhead
+	
+	\hline
+	\multicolumn{4}{r}{\textit{Bảng tiếp tục ở trang sau}}\\
+	\endfoot
+	
+	\hline
+	\endlastfoot
+	TC01 & Đăng ký với thông tin hợp lệ & Tạo tài khoản và lưu thông tin thành công. & Pass. \\ \hline
+	TC02 & Đăng ký với email đã tồn tại & Từ chối tạo tài khoản và thông báo email đã được sử dụng. & Pass. \\ \hline
+	TC03 & Đăng ký khi bỏ trống trường bắt buộc & Hiển thị thông báo yêu cầu nhập đầy đủ thông tin. & Pass. \\ \hline
+	TC04 & Đăng ký với email sai định dạng & Không chấp nhận dữ liệu email không hợp lệ. &Pass. \\ \hline
+	TC05 & Đăng nhập với thông tin hợp lệ & Xác thực tài khoản và truy cập hệ thống thành công. & Pass. \\ \hline
+	TC06 & Đăng nhập với mật khẩu không đúng & Từ chối đăng nhập và hiển thị thông báo phù hợp. & Pass. \\ \hline
+	TC07 & Đăng nhập khi bỏ trống email hoặc mật khẩu & Yêu cầu người dùng nhập đầy đủ thông tin. & Pass. \\ \hline
+	TC08 & Đăng xuất khỏi hệ thống & Kết thúc phiên đăng nhập và chuyển về trang phù hợp. & Pass. \\ \hline
+	TC09 & Xem thông tin hồ sơ cá nhân & Hiển thị đúng thông tin của tài khoản đang đăng nhập. &Pass. \\ \hline
+	TC10 & Cập nhật thông tin hồ sơ cá nhân & Lưu và hiển thị thông tin mới sau khi cập nhật. & Pass. \\ \hline
+	TC11 & Xem danh sách dị nguyên & Hiển thị danh mục dị nguyên có trong hệ thống. & Pass. \\ \hline
+	TC12 & Chọn dị nguyên trong hồ sơ cá nhân & Lưu đúng các dị nguyên người dùng đã lựa chọn. &Pass. \\ \hline
+	TC13 & Bỏ chọn dị nguyên đã lưu & Cập nhật hồ sơ và loại bỏ lựa chọn tương ứng. & Pass. \\ \hline
+	TC14 & Tải ảnh nhãn thực phẩm hợp lệ & Tiếp nhận ảnh và chuyển sang bước lưu trữ, phân tích. & Pass. \\ \hline
+	TC15 & Không chọn ảnh khi thực hiện quét & Hiển thị yêu cầu chọn ảnh trước khi tiếp tục. & Pass. \\ \hline
+	TC16 & Tải tệp không phải định dạng ảnh hỗ trợ & Từ chối tệp và thông báo định dạng không hợp lệ. &Pass. \\ \hline
+	TC17 & Tải ảnh vượt quá dung lượng cho phép & Từ chối ảnh hoặc thông báo giới hạn dung lượng. & Pass. \\ \hline
+	TC18 & Tải ảnh lên Cloudinary thành công & Nhận URL ảnh và sử dụng URL trong quá trình phân tích. &Pass. \\ \hline
+	TC19 & Cloudinary không phản hồi hoặc tải ảnh thất bại & Thông báo lỗi và không tiếp tục phân tích bằng URL không hợp lệ. & Pass. \\ \hline
+	TC20 & Phân tích ảnh nhãn có nội dung rõ ràng & Gemini API trích xuất thông tin sản phẩm và nội dung nhãn. & Pass. \\ \hline
+	TC21 & Phân tích ảnh mờ hoặc thiếu sáng & Thông báo khi dữ liệu nhận diện không đầy đủ hoặc không đáng tin cậy. & Pass. \\ \hline
+	TC22 & Gemini API không phản hồi & Thông báo lỗi dịch vụ và xử lý phù hợp, không làm gián đoạn ứng dụng. & Pass. \\ \hline
+	TC23 & Nhãn có thông tin mã vạch & Trích xuất mã vạch nếu thông tin hiển thị đủ rõ trên ảnh. &Pass. \\ \hline
+	TC24 & Tra cứu sản phẩm bằng mã vạch có trong cơ sở dữ liệu & Trả về thông tin sản phẩm tương ứng với mã vạch. & Pass. \\ \hline
+	TC25 & Tra cứu sản phẩm không tìm thấy mã vạch & Tiếp tục xử lý theo phương thức tra cứu phù hợp hoặc thông báo không tìm thấy. & Pass. \\ \hline
+	TC26 & Sản phẩm có thông tin thành phần trong cơ sở dữ liệu & Truy xuất danh sách thành phần liên quan đến sản phẩm. & Pass. \\ \hline
+	TC27 & Thành phần có tên gọi tương đương & Chuẩn hóa và đối chiếu theo dữ liệu tên gọi đã được hỗ trợ. & Pass. \\ \hline
+	TC28 & Thành phần có tên gần giống nhưng khác ý nghĩa & Không kết luận nhầm dị nguyên chỉ dựa trên chuỗi ký tự tương tự. & Pass. \\ \hline
+	TC29 & Thành phần chứa dị nguyên người dùng đã chọn & Hiển thị dị nguyên trùng với hồ sơ dị ứng của người dùng. & Pass. \\ \hline
+	TC30 & Thành phần chứa dị nguyên không có trong hồ sơ cá nhân & Hiển thị thông tin dị nguyên nhận diện được nhưng không đánh dấu trùng hồ sơ. & Pass. \\ \hline
+	TC31 & Nhãn có cảnh báo ``có thể chứa'' hoặc ``có thể chứa vết'' & Hiển thị riêng cảnh báo có thể chứa vết, không gộp với thành phần thực tế. & Pass. \\ \hline
+	TC32 & Nhãn không thể hiện thông tin dị nguyên rõ ràng & Không tự kết luận sản phẩm an toàn; hiển thị trạng thái thiếu thông tin phù hợp. & Pass. \\ \hline
+	TC33 & Xem kết quả phân tích sau khi quét & Hiển thị thông tin sản phẩm, thành phần và cảnh báo đã xử lý. & Pass. \\ \hline
+	TC34 & Lưu kết quả quét vào lịch sử & Tạo bản ghi lịch sử kèm thông tin kết quả và tài khoản tương ứng. & Pass. \\ \hline
+	TC35 & Xem lịch sử quét của tài khoản & Chỉ hiển thị lịch sử thuộc tài khoản đang đăng nhập. & Pass. \\ \hline
+	TC36 & Xem chi tiết một lần quét trong lịch sử & Hiển thị đúng thông tin của lần quét được chọn. & Pass. \\ \hline
+	TC37 & Người dùng chưa đăng nhập truy cập chức năng yêu cầu tài khoản & Chuyển đến trang đăng nhập hoặc từ chối truy cập theo thiết kế. &Pass. \\ \hline
+	TC38 & Hai tài khoản xem lịch sử quét riêng biệt & Mỗi tài khoản chỉ xem được dữ liệu lịch sử của chính mình. & Pass. \\ \hline
+\end{longtable}
+
+Bảng trên mô tả kết quả mong đợi của các trường hợp kiểm thử. Nhóm cần ghi nhận kết quả thực tế và đánh dấu đạt hoặc không đạt sau mỗi lần thực hiện.
+
+\subsection{Đánh giá kết quả kiểm thử}
+
+Đối với chức năng phân tích nhãn, kết quả nhận diện cần được so sánh với nội dung trên ảnh gốc để kiểm tra khả năng trích xuất tên sản phẩm, thành phần và cảnh báo. Đối với chức năng đối chiếu, cần kiểm tra dị nguyên được phát hiện có phù hợp với dữ liệu nhãn và hồ sơ người dùng hay không.
+
+\Needspace{4\baselineskip}
+Ngoài ra, cần kiểm tra dữ liệu lịch sử được lưu trong TiDB Cloud và URL ảnh do Cloudinary cung cấp. Những lỗi phát sinh trong quá trình kiểm thử cần được ghi nhận để phục vụ việc điều chỉnh hệ thống.
+
+\Needspace{6\baselineskip}
+\subsection{Tổng hợp kết quả kiểm thử}
+
+Bảng~\ref{tab:ch4-test-summary} được sử dụng để tổng hợp kết quả sau khi hoàn thành kiểm thử.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Tổng hợp kết quả kiểm thử}
+	\label{tab:ch4-test-summary}
+	\small
+	\renewcommand{\arraystretch}{1.2}
+	\begin{tabularx}{0.9\textwidth}{|>{\raggedright\arraybackslash}p{5cm}|>{\raggedright\arraybackslash}X|}
+		\hline
+		\textbf{Nội dung} & \textbf{Kết quả ghi nhận} \\ \hline
+		Tổng số trường hợp kiểm thử & Cập nhật theo thực tế. \\ \hline
+		Số trường hợp đạt & Cập nhật theo thực tế. \\ \hline
+		Số trường hợp không đạt & Cập nhật theo thực tế. \\ \hline
+		Lỗi phát hiện và hướng khắc phục & Ghi nhận theo kết quả kiểm thử. \\ \hline
+	\end{tabularx}
+\end{table}
+
+\section{Hạn chế và hướng phát triển}
+
+\subsection{Hạn chế}
+
+Khả năng phân tích phụ thuộc vào chất lượng ảnh và nội dung nhãn. Ảnh mờ, thiếu sáng hoặc chữ nhỏ có thể khiến hệ thống nhận diện thiếu hoặc sai thông tin. Bên cạnh đó, phạm vi dữ liệu dị nguyên và các biến thể tên thành phần chưa thể bao quát toàn bộ sản phẩm thực tế.
+
+Hệ thống còn phụ thuộc vào Gemini API, Cloudinary và Open Food Facts nên có thể bị ảnh hưởng bởi kết nối mạng, giới hạn dịch vụ hoặc dữ liệu bên ngoài chưa đầy đủ. Vì vậy, kết quả phân tích cần được người dùng kiểm tra lại với bao bì thực phẩm thực tế.
+
+\subsection{Hướng phát triển}
+
+Trong thời gian tới, hệ thống có thể được cải thiện theo các hướng: nâng cao khả năng xử lý ảnh đầu vào; mở rộng danh mục dị nguyên và tên gọi tương đương; bổ sung căn cứ cho từng cảnh báo; cải thiện xử lý lỗi khi dịch vụ bên ngoài không phản hồi; cập nhật dữ liệu sản phẩm và mở rộng kiểm thử với nhiều loại nhãn khác nhau.
+
+\section{Kết luận chương}
+
+Chương 4 đã trình bày môi trường triển khai, các công nghệ sử dụng và cách cài đặt những chức năng chính của hệ thống Allergy Warning. Nội dung tập trung vào quy trình tiếp nhận và lưu trữ ảnh, phân tích nhãn bằng Gemini API, chuẩn hóa thành phần, đối chiếu dị nguyên và hiển thị kết quả. Chương cũng đề cập đến giao diện, kiểm thử, những hạn chế và hướng phát triển của hệ thống.

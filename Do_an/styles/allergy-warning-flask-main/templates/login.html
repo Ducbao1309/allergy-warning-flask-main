@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập | Allergy Warning{% endblock %}
+{% block content %}
+<div class="auth-layout content-shell"><section class="auth-aside"><span class="eyebrow">ALLERGY WARNING</span><h1>Chủ động hơn khi chọn thực phẩm.</h1><p>Đăng nhập để quản lý hồ sơ dị ứng, phân tích nhãn và xem lại lịch sử quét của bạn.</p><div class="auth-aside-mark">A<span>+</span></div></section>
+  <section class="auth-card"><span class="eyebrow">CHÀO MỪNG TRỞ LẠI</span><h2>Đăng nhập</h2><p class="form-lead">Nhập thông tin tài khoản để tiếp tục.</p>
+    <form method="POST" action="{{ url_for('auth.login') }}" class="stack-form">
+      <div class="form-group"><label for="email">Email</label><input id="email" type="email" name="email" autocomplete="email" placeholder="ten@email.com" required></div>
+      <div class="form-group"><label for="password">Mật khẩu</label><input id="password" type="password" name="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required></div>
+      <button type="submit" class="btn btn-primary full-width">Đăng nhập</button>
+    </form>
+    <p class="auth-switch">Chưa có tài khoản? <a href="{{ url_for('auth.register') }}">Đăng ký</a></p>
+  </section>
+</div>
+{% endblock %}

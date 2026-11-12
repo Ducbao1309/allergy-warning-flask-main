@@ -1,0 +1,83 @@
+
+% ---------------------------------------------------------------------
+% CHƯƠNG 1 — MỞ ĐẦU
+% ---------------------------------------------------------------------
+
+\chapter{Mở đầu}
+\label{ch:modau}
+
+% Không thụt đầu dòng và tạo khoảng cách giữa các đoạn
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+% ---------------------------------------------------------------------
+% 1.1. LÝ DO CHỌN ĐỀ TÀI
+% ---------------------------------------------------------------------
+
+\section{Lý do chọn đề tài}
+
+Trong cuộc sống hiện nay, thực phẩm đóng vai trò thiết yếu đối với sức khỏe con người. Tuy nhiên, đối với những người có cơ địa dị ứng, việc sử dụng thực phẩm chứa các thành phần không phù hợp có thể gây ra những phản ứng ảnh hưởng đến sức khỏe. Vì vậy, kiểm tra thông tin trên nhãn mác và bảng thành phần trước khi sử dụng là điều cần thiết.
+
+Trên thực tế, thông tin thành phần trên bao bì thường được trình bày bằng chữ nhỏ, sử dụng nhiều thuật ngữ chuyên ngành hoặc các tên gọi khác nhau của cùng một thành phần. Điều này gây khó khăn cho người tiêu dùng trong việc nhận diện các chất có khả năng gây dị ứng. Việc kiểm tra thủ công cũng mất thời gian và có nguy cơ bỏ sót những thông tin quan trọng.
+
+Sự phát triển của trí tuệ nhân tạo và công nghệ xử lý hình ảnh đã tạo điều kiện cho việc tự động hóa quá trình đọc và phân tích nhãn thực phẩm. Thông qua công nghệ nhận dạng ký tự quang học (OCR) kết hợp với các phương pháp xử lý văn bản và trí tuệ nhân tạo, hệ thống có thể trích xuất thông tin, nhận diện thành phần và đối chiếu với dữ liệu dị nguyên để đưa ra cảnh báo.
+
+Xuất phát từ những vấn đề trên, nhóm lựa chọn đề tài “Xây dựng hệ thống đọc nhãn mác và cảnh báo thành phần dị ứng thực phẩm” nhằm xây dựng một ứng dụng web hỗ trợ người dùng kiểm tra thành phần thực phẩm nhanh chóng và thuận tiện. Đồng thời, đề tài giúp nhóm vận dụng kiến thức về trí tuệ nhân tạo, xử lý ảnh, xử lý dữ liệu và phát triển ứng dụng web vào giải quyết một vấn đề thực tiễn.
+
+% ---------------------------------------------------------------------
+% 1.2. MỤC TIÊU CỦA ĐỒ ÁN
+% ---------------------------------------------------------------------
+
+\section{Mục tiêu của đồ án}
+
+Đồ án hướng đến xây dựng hệ thống hỗ trợ đọc thông tin trên nhãn mác thực phẩm và cảnh báo các thành phần có khả năng gây dị ứng. Các mục tiêu cụ thể bao gồm:
+
+\begin{itemize}[leftmargin=0pt, label={}, itemsep=3pt]
+	\item Xây dựng chức năng tiếp nhận hình ảnh nhãn mác hoặc bảng thành phần thực phẩm từ người dùng.
+	
+	\item Tích hợp công nghệ OCR và trí tuệ nhân tạo để trích xuất, phân tích thông tin từ hình ảnh.
+	
+	\item Xây dựng cơ chế nhận diện thành phần có khả năng gây dị ứng thông qua xử lý văn bản và đối chiếu dữ liệu dị nguyên.
+	
+	\item Phát triển chức năng cảnh báo và hiển thị kết quả phân tích để người dùng dễ dàng theo dõi.
+	
+	\item Xây dựng giao diện web hỗ trợ quét nhãn, quản lý hồ sơ dị ứng và tra cứu lịch sử phân tích.
+	
+	\item Kiểm thử và đánh giá khả năng nhận diện, phân tích thành phần và độ chính xác của kết quả cảnh báo.
+\end{itemize}
+
+Thông qua các mục tiêu trên, nhóm hướng đến xây dựng một hệ thống có khả năng hỗ trợ người dùng trong quá trình kiểm tra và nhận biết các thành phần cần chú ý trên nhãn thực phẩm.
+
+% ---------------------------------------------------------------------
+% 1.3. PHẠM VI VÀ ĐỐI TƯỢNG
+% ---------------------------------------------------------------------
+
+\section{Phạm vi và đối tượng}
+
+Đối tượng nghiên cứu của đồ án là thông tin thành phần trên nhãn mác thực phẩm, các chất có khả năng gây dị ứng, công nghệ nhận dạng ký tự quang học và việc ứng dụng trí tuệ nhân tạo trong phân tích, cảnh báo dị nguyên.
+
+Phạm vi thực hiện tập trung vào xây dựng hệ thống web cho phép người dùng tải lên hình ảnh nhãn thực phẩm. Hệ thống tiến hành trích xuất văn bản, phân tích thành phần, đối chiếu với dữ liệu dị nguyên và hồ sơ dị ứng của người dùng, sau đó hiển thị kết quả cảnh báo.
+
+Về mặt công nghệ, đồ án tập trung vào xử lý hình ảnh, nhận dạng ký tự, xử lý văn bản, tích hợp trí tuệ nhân tạo, quản lý dữ liệu và phát triển giao diện web.
+
+Hệ thống chỉ có vai trò hỗ trợ nhận diện và cung cấp thông tin tham khảo, không thay thế chuyên gia y tế hoặc đưa ra chẩn đoán dị ứng. Kết quả phụ thuộc vào chất lượng hình ảnh, khả năng nhận dạng và phạm vi dữ liệu được sử dụng. Người dùng cần kiểm tra thông tin trên bao bì thực tế trước khi quyết định sử dụng sản phẩm.
+
+% ---------------------------------------------------------------------
+% 1.4. BỐ CỤC BÁO CÁO
+% ---------------------------------------------------------------------
+
+\section{Bố cục báo cáo}
+
+Ngoài phần mở đầu, kết luận và tài liệu tham khảo, báo cáo gồm sáu chương:
+
+Chương 1: Mở đầu. Trình bày lý do chọn đề tài, mục tiêu, phạm vi và đối tượng nghiên cứu.
+
+Chương 2: Cơ sở lý thuyết và công nghệ. Giới thiệu các kiến thức nền tảng và công nghệ sử dụng trong hệ thống.
+
+Chương 3: Phân tích và thiết kế hệ thống. Trình bày yêu cầu, kiến trúc, chức năng và quy trình hoạt động của hệ thống.
+
+Chương 4: Cài đặt hệ thống. Mô tả quá trình triển khai các chức năng và xây dựng giao diện ứng dụng.
+
+Chương 5: Kết quả và đánh giá. Trình bày kết quả thực hiện, kiểm thử và đánh giá hệ thống.
+
+Chương 6: Kết luận và hướng phát triển. Tổng kết kết quả đạt được, những hạn chế và đề xuất hướng phát triển trong tương lai.
